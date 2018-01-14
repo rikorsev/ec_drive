@@ -1,0 +1,12 @@
+[*] Buy USC<->Serial Convertor
+
+[] Get 22pf 0805 capasitor x2
+
+[*] If no capasitors - retune MCUclock on HSI
+
+[] trace messages trough UART
+
+[*] Setup debug throug stlinkv2+openocd+gdb
+
+[] Code refactoring
+[] Get oscilloscope
