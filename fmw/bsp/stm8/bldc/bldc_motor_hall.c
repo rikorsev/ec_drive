@@ -11,7 +11,7 @@ void bldc_hall_init(void)
 {
   /*Hall Sensors pins*/
   GPIO_Init(BLDC_HALL_PORT, BLDC_HALL_PINS, 
-	    GPIO_Mode_In_FL_IT);
+	    GPIO_Mode_In_PU_IT);
   
   /*External interrupt Hall Sensor 1*/
   EXTI_SetPinSensitivity(EXTI_Pin_3, EXTI_Trigger_Rising_Falling);
@@ -23,9 +23,9 @@ void bldc_hall_init(void)
   EXTI_SetPinSensitivity(EXTI_Pin_5, EXTI_Trigger_Rising_Falling);
 
   /*Set priority for hall sensors interrupt*/
-  ITC_SetSoftwarePriority(EXTI0_IRQn, ITC_PriorityLevel_3);
-  ITC_SetSoftwarePriority(EXTI1_IRQn, ITC_PriorityLevel_3);
-  ITC_SetSoftwarePriority(EXTI2_IRQn, ITC_PriorityLevel_3);
+  ITC_SetSoftwarePriority(EXTI3_IRQn, ITC_PriorityLevel_3);
+  ITC_SetSoftwarePriority(EXTI4_IRQn, ITC_PriorityLevel_3);
+  ITC_SetSoftwarePriority(EXTI5_IRQn, ITC_PriorityLevel_3);
 
 }
 

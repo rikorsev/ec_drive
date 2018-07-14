@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include "stm8l15x_conf.h"
 
+#include "interface.h"
 #include "bldc_motor.h"
+
 #include "stm8_bldc_motor.h"
+#include "stm8_spi.h"
 
 #include "stm8_trace.h"
 
@@ -15,11 +18,20 @@ volatile static uint32_t delay_ms_count = 0;
 
 void clock_init(void)
 {
+  //GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_2, ENABLE);
+  //GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_3, ENABLE);
+  
+  //CLK_HSEConfig(CLK_HSE_ON);
+  //while(CLK_GetFlagStatus(CLK_FLAG_HSERDY) != SET)
+  //{
+  //  
+  //}
+  
   CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);
   CLK_SYSCLKSourceSwitchCmd(ENABLE);
-  CLK_SYSCLKSourceConfig(CLK_SYSCLKSource_HSI); 
-
-  while (CLK_GetSYSCLKSource() != CLK_SYSCLKSource_HSI)
+  CLK_SYSCLKSourceConfig(CLK_SYSCLKSource_HSE); 
+    
+  while (CLK_GetSYSCLKSource() != CLK_SYSCLKSource_HSE)
   { 
 
   }
@@ -57,16 +69,22 @@ void blink(void)
   printf("tick\r\n");
 }
 
+void toggle_led(void *buff, size_t len)
+{
+  //GPIO_ToggleBits(LEDS_PORT, GREEN_LED_PIN);
+}
+
 int main(void)
 {
   /* init section */
+  disableInterrupts();
   clock_init(); /* let's try without, external clock */
   timer_init();
   gpio_init();
 
-  uart1_tracer_init();
+  //uart1_tracer_init();
   bldc_init(stm8_bldc_motor_get());
-  
+  itf_init(stm8_spi_slave_get(), toggle_led);
   enableInterrupts();
   
   delay_ms(1000);

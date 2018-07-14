@@ -35,13 +35,20 @@ void bldc_pwm_init(void)
 
   /*Init PWM GPIO*/
   /* TIM1 Channels 1, 2, 3 and 1N configuration: PD2, PD4, PD5 and PD7 */
-  GPIO_Init(BLDC_MOTOR_DRIVER_PORT1, BLDC_MOTOR_DRIVER_PINS1, 
-	    GPIO_Mode_Out_PP_Low_Fast);
+  //GPIO_Init(BLDC_MOTOR_DRIVER_PORT1, BLDC_MOTOR_DRIVER_PINS1, 
+  //	    GPIO_Mode_Out_PP_Low_Fast);
 
   /* TIM1 Channels 2N and 3N configuration: PE1 and PE2 */
-  GPIO_Init(BLDC_MOTOR_DRIVER_PORT2, BLDC_MOTOR_DRIVER_PINS2, 
-	    GPIO_Mode_Out_PP_Low_Fast);
+  //GPIO_Init(BLDC_MOTOR_DRIVER_PORT2, BLDC_MOTOR_DRIVER_PINS2, 
+  //	    GPIO_Mode_Out_PP_Low_Fast);
 
+  GPIO_Init(GPIOD, GPIO_Pin_2, GPIO_Mode_Out_PP_Low_Fast);                    // 1P
+  GPIO_Init(GPIOD, GPIO_Pin_4, GPIO_Mode_Out_PP_Low_Fast);                    // 2P
+  GPIO_Init(GPIOD, GPIO_Pin_5, GPIO_Mode_Out_PP_Low_Fast);                    // 3P
+  GPIO_Init(GPIOD, GPIO_Pin_7, GPIO_Mode_Out_PP_Low_Fast);                    // 1N
+  GPIO_Init(GPIOE, GPIO_Pin_1, GPIO_Mode_Out_PP_Low_Fast);                    // 2N
+  GPIO_Init(GPIOE, GPIO_Pin_2, GPIO_Mode_Out_PP_Low_Fast);                    // 3N
+  
   /* TIM1 Break input pin configuration */
   GPIO_Init(GPIOD, GPIO_Pin_6, GPIO_Mode_In_FL_No_IT);
 
@@ -76,6 +83,7 @@ void bldc_pwm_init(void)
                   TIM1_BreakPolarity_Low, TIM1_AutomaticOutput_Disable);
 
   TIM1_CCPreloadControl(ENABLE);
+  ITC_SetSoftwarePriority(TIM1_UPD_OVF_TRG_IRQn, ITC_PriorityLevel_3);
   TIM1_ITConfig(TIM1_IT_COM, ENABLE);
   
   /* Main Output Enable */
@@ -136,38 +144,38 @@ bool bldc_pwm_switch(uint8_t hall_sensors, bldc_dir_t dir)
       switch(hall_sensors)
 	{
 	case HALL_STATE_1:
-	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;
-	  GPIOE->ODR |= 0x02;
+//	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;
+//	  GPIOE->ODR |= 0x02;
 	  hall_leds = 1;
 	  break;
   
 	case HALL_STATE_2:
-	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;                       
-	  GPIOE->ODR |= 0x04;
+//	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;                       
+//	  GPIOE->ODR |= 0x04;
 	  hall_leds = 2;
           break;
   
 	case HALL_STATE_3:
-	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;                       
-	  GPIOE->ODR |= 0x04;
+//	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;                       
+//	  GPIOE->ODR |= 0x04;
 	  hall_leds = 3;
           break;
   
 	case HALL_STATE_4:
-	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;
-	  GPIOD->ODR |= 0x80;
+//	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;
+//	  GPIOD->ODR |= 0x80;
 	  hall_leds = 4;
           break;
   
 	case HALL_STATE_5:
-	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
-	  GPIOD->ODR |= 0x80;
+//	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
+//	  GPIOD->ODR |= 0x80;
 	  hall_leds = 5;
           break;
   
 	case HALL_STATE_6:
-	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
-	  GPIOE->ODR |= 0x02;
+//	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
+//	  GPIOE->ODR |= 0x02;
 	  hall_leds = 6;
           break;
   
@@ -181,53 +189,58 @@ bool bldc_pwm_switch(uint8_t hall_sensors, bldc_dir_t dir)
       switch(hall_sensors)
 	{
 	case HALL_STATE_6:
-	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;   
-	  GPIOE->ODR |= 0x04;
+//	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;   
+//	  GPIOE->ODR |= 0x04;
 	  hall_leds = 6;
 	  break;
 
 	case HALL_STATE_5: 
-	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;
-	  GPIOE->ODR |= 0x04;
+//	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;
+//	  GPIOE->ODR |= 0x04;
 	  hall_leds = 5;
 	  break;
 	  
 	case HALL_STATE_4:
-	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;
-	  GPIOE->ODR |= 0x02;
+//	  tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;
+//	  GPIOE->ODR |= 0x02;
 	  hall_leds = 4;
 	  break;
 
 	case HALL_STATE_3:
-	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
-	  GPIOE->ODR |= 0x02;   
+//	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
+//	  GPIOE->ODR |= 0x02;   
 	  hall_leds = 3;
 	  break;   
 
 	case HALL_STATE_2:
-	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
-	  GPIOD->ODR |= 0x80;
+//	  tmp2 = TIM1_CCER2_CC3NE|TIM1_CCER2_CC3E;
+//	  GPIOD->ODR |= 0x80;
 	  hall_leds = 2;
 	  break;
 
 	case HALL_STATE_1:
-	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;  
-	  GPIOD->ODR |= 0x80;
+//	  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;  
+//	  GPIOD->ODR |= 0x80;
 	  hall_leds = 1;
 	  break;
 
 	default:
-	  return FALSE;
+//	  return FALSE;
 	}
     }
+  
+  //tmp1 = TIM1_CCER1_CC1E|TIM1_CCER1_CC1NE;
+  tmp1 = TIM1_CCER1_CC2E|TIM1_CCER1_CC2NE;  
+  GPIOD->ODR |= 0x80;
+  
   TIM1->CCER1 = tmp1;
   TIM1->CCER2 = tmp2;
   TIM1->EGR = TIM1_EventSource_COM;
 
   /* update hall leds */
   BLDC_LEDS_PORT->ODR &= ~BLDC_LEDS_PINS;
-  BLDC_LEDS_PORT->ODR |= (hall_leds << BLDC_LEDS_SHIFT);
-  
+  //BLDC_LEDS_PORT->ODR |= (hall_leds << BLDC_LEDS_SHIFT);
+  BLDC_LEDS_PORT->ODR |= (((hall_sensors >> 3) & 0x07) << BLDC_LEDS_SHIFT);
   return TRUE;
 }
 
