@@ -1,1 +1,4 @@
+fmw/build/gcc/obj/*
+fmw/build/gcc/bin/*
 ord/*
+*~
