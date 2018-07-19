@@ -1,154 +1,114 @@
-#include <stdio.h>
-#include "stm8l15x_conf.h"
+#include "stm32f10x.h"
 
-#include "interface.h"
-#include "bldc_motor.h"
+static volatile uint32_t runtime = 0;
 
-#include "stm8_bldc_motor.h"
-#include "stm8_spi.h"
+#define LED2_PIN  (GPIO_Pin_5)
 
-#include "stm8_trace.h"
-
-#define ms                     250
-
-#define LEDS_PORT                     GPIOC
-#define GREEN_LED_PIN              GPIO_Pin_4
-
-volatile static uint32_t delay_ms_count = 0;
-
-void clock_init(void)
+void gpio_init(void)
 {
-  //GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_2, ENABLE);
-  //GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_3, ENABLE);
-  
-  //CLK_HSEConfig(CLK_HSE_ON);
-  //while(CLK_GetFlagStatus(CLK_FLAG_HSERDY) != SET)
-  //{
-  //  
-  //}
-  
-  CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);
-  CLK_SYSCLKSourceSwitchCmd(ENABLE);
-  CLK_SYSCLKSourceConfig(CLK_SYSCLKSource_HSE); 
-    
-  while (CLK_GetSYSCLKSource() != CLK_SYSCLKSource_HSE)
-  { 
+  GPIO_InitTypeDef gpio = {0};
+  /* GPIOA Periph clock enable */
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
-  }
-
+  /* Configure PD0 and PD2 in output pushpull mode */
+  gpio.GPIO_Pin = LED2_PIN;
+  gpio.GPIO_Speed = GPIO_Speed_2MHz;
+  gpio.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_Init(GPIOA, &gpio);
 }
 
 void timer_init(void)
 {
-  CLK_PeripheralClockConfig(CLK_Peripheral_TIM4, ENABLE);
-  TIM4_TimeBaseInit(TIM4_Prescaler_64,  ms);
-  ITC_SetSoftwarePriority(TIM4_UPD_OVF_TRG_IRQn, ITC_PriorityLevel_2);
-  TIM4_ITConfig(TIM4_IT_Update, ENABLE);
-  TIM4_Cmd(ENABLE);
+  TIM_TimeBaseInitTypeDef tim = {0};
+  NVIC_InitTypeDef nvic;
+  
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+  
+  /* Period 1ms */
+  tim.TIM_Prescaler = 0;
+  tim.TIM_CounterMode = TIM_CounterMode_Up;
+  tim.TIM_Period = 8000;
+  tim.TIM_ClockDivision = TIM_CKD_DIV1;
+  tim.TIM_RepetitionCounter = 0;
+
+  TIM_TimeBaseInit(TIM4, &tim);
+
+  /* Enable the TIM2 global Interrupt */
+  nvic.NVIC_IRQChannel = TIM4_IRQn;
+  nvic.NVIC_IRQChannelPreemptionPriority = 0;
+  nvic.NVIC_IRQChannelSubPriority = 1;
+  nvic.NVIC_IRQChannelCmd = ENABLE;
+
+  NVIC_Init(&nvic);
+  
+  TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+
+  TIM_Cmd(TIM4, ENABLE);
 }
 
-void gpio_init(void)
+void clk_init(void)
 {
-  GPIO_Init(LEDS_PORT, GREEN_LED_PIN, GPIO_Mode_Out_PP_High_Slow);
+  RCC_HSICmd(ENABLE);
+
+  while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) != SET)    
+    {
+      /* do nothing */
+    }
+    
+  RCC_SYSCLKConfig(RCC_SYSCLKSource_HSI);
 }
 
 void delay_ms(uint32_t delay)
 {
-  delay_ms_count = delay;
+  uint32_t target_runtime = runtime + delay;
 
-  while(delay_ms_count)
+  while(target_runtime != runtime)
     {
-
+      /* do nothing */
     }
-}
-
-void blink(void)
-{
-  delay_ms(1000);
-  //GPIO_ToggleBits(LEDS_PORT, GREEN_LED_PIN);
-  printf("tick\r\n");
-}
-
-void toggle_led(void *buff, size_t len)
-{
-  //GPIO_ToggleBits(LEDS_PORT, GREEN_LED_PIN);
 }
 
 int main(void)
 {
-  /* init section */
-  disableInterrupts();
-  clock_init(); /* let's try without, external clock */
+  clk_init();
   timer_init();
   gpio_init();
-
-  //uart1_tracer_init();
-  bldc_init(stm8_bldc_motor_get());
-  itf_init(stm8_spi_slave_get(), toggle_led);
-  enableInterrupts();
   
-  delay_ms(1000);
-  
-  bldc_set_power(stm8_bldc_motor_get(), 16);
-  bldc_start(stm8_bldc_motor_get());
-
-  printf("EC drive 0.1\r\n");
-
   while(1)
-    {
-      /* infinit loop */
-      blink();
-      printf("Hello, world!\r\n");
-    }
+  {
+    GPIO_SetBits(GPIOA, LED2_PIN);
+    delay_ms(500);
+    GPIO_ResetBits(GPIOA, LED2_PIN);
+    delay_ms(500);
+  }
 
-#ifdef _SDCC_
-#pragma save
-#pragma disable_warning 126
-#endif // _SDCC_
   return 0;
-#ifdef _SDCC_
-#pragma restore
-#endif // _SDCC_
 }
 
-INTERRUPT_HANDLER(TIM4_UPD_OVF_TRG_IRQHandler, 25)
+void TIM4_IRQHandler(void)
 {
-  delay_ms_count--;
-  
-  uart1_tracer_flush();
-
-  TIM4_ClearITPendingBit(TIM4_IT_Update);
+  if(TIM_GetITStatus(TIM4, TIM_IT_Update) == SET)
+    {
+      runtime++;
+      TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
+    }
 }
+
+#ifdef  USE_FULL_ASSERT
 
 /**
-  * @brief TRAP Interrupt routine
-  * @param  None
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
   * @retval None
   */
-INTERRUPT_HANDLER_TRAP(TRAP_IRQHandler)
+void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* In order to detect unexpected events during development,
-     it is recommended to set a breakpoint on the following instruction.
-  */
-  while(1)
-  {
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
-  }
+  while (1)
+  {}
 }
-
-/**
-  * @brief Top Level Interrupt routine.
-  * @param  None
-  * @retval None
-  */
-INTERRUPT_HANDLER(TLI_IRQHandler, 0)
-
-{
-  /* In order to detect unexpected events during development,
-     it is recommended to set a breakpoint on the following instruction.
-  */
-  while(1)
-  {
-    
-  }
-}
+#endif

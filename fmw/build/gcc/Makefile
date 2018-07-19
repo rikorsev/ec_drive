@@ -1,6 +1,10 @@
 CC=arm-none-eabi-gcc
 LD=arm-none-eabi-gcc
 SIZE=arm-none-eabi-size
+OBJCOPY=arm-none-eabi-objcopy
+STFLASH=st-flash
+OPENOCD=openocd
+GDB=arm-none-eabi-gdb
 
 OBJ_DIR=./obj
 BIN_DIR=./bin
@@ -10,6 +14,7 @@ TARGET_NAME=ec_drive
 TARGET_BINARY=$(TARGET_NAME).elf
 TARGET_HEX=$(TARGET_NAME).hex
 TARGET=$(BIN_DIR)/$(TARGET_BINARY)
+HEX=$(BIN_DIR)/$(TARGET_HEX)
 
 #Pathes
 PROJ_ROOT=../..
@@ -28,10 +33,12 @@ INCLUDE+=-I$(STM32F10x_PERIPH_EVAL_DIR)
 
 #Source files
 #Application source files
-SRC_APP+=$(STM32F10x_PERIPH_GPIO_TOGGLE_EXANPLE_DIR)/main.c
+#SRC_APP+=$(STM32F10x_PERIPH_GPIO_TOGGLE_EXANPLE_DIR)/main.c
+SRC_APP+=$(PROJ_ROOT)/app/main.c
 SRC_APP+=$(STM32F10x_PERIPH_GPIO_TOGGLE_EXANPLE_DIR)/stm32f10x_it.c
 SRC_APP+=$(STM32F10x_PERIPH_EVAL_DIR)/stm32_eval.c
 
+VPATH+=$(PROJ_ROOT)/app
 VPATH+=$(STM32F10x_PERIPH_GPIO_TOGGLE_EXANPLE_DIR)
 VPATH+=$(STM32F10x_PERIPH_EVAL_DIR)
 
@@ -73,9 +80,9 @@ STARTUP_FILE=$(STM32F10x_PERIPH_CMSIS_DIR)/DeviceSupport/ST/STM32F10x/startup/gc
 STARTUPOBJ:=$(patsubst %.s, $(OBJ_DIR)/%.o, $(notdir $(STARTUP_FILE)))
 
 OBJ=$(patsubst %.c, $(OBJ_DIR)/%.o, $(notdir $(SRC)))
-#OBJ+=$(STARTUPOBJ)
 
 CFLAGS      = -Wall \
+-g \
 -mcpu=cortex-m3 \
 -mthumb \
 -D__HEAP_SIZE=0x0000 \
@@ -104,7 +111,7 @@ LDFLAGS     = \
 -Wl,-Map=$(TARGET).map \
 -Wl,-script="stm32f103rb_flash.ld"
 
-.PHONY: $(TARGET) clean
+.PHONY: $(TARGET) clean upload debug
 
 all: $(TARGET)
 
@@ -120,6 +127,16 @@ $(OBJ_DIR)/%.o: %.c $(OBJ_DIR)
 $(STARTUPOBJ):
 	$(CC) -c $(CFLAGS) $(INCLUDES) $(STARTUP_FILE) -o $(STARTUPOBJ)
 
+$(HEX): $(TARGET)
+	$(OBJCOPY) -O ihex $(TARGET) $(HEX)
+
+upload: $(HEX)
+	$(STFLASH) --format ihex write $(HEX)
+
+debug: $(TARGET)
+	openocd -f interface/stlink-v2-1.cfg -f target/stm32f1x.cfg &
+	$(GDB) -ex "target remote localhost:3333" -ex "b main" -ex "monitor reset halt" -ex "c" $(TARGET)
+	pkill $(OPENOCD)
 $(OBJ_DIR):
 	mkdir $(OBJ_DIR)
 
