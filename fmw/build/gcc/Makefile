@@ -115,13 +115,13 @@ LDFLAGS     = \
 
 all: $(TARGET)
 
-$(TARGET): $(OBJ) $(STARTUPOBJ) $(BIN_DIR)
+$(TARGET): $(OBJ_DIR) $(OBJ) $(STARTUPOBJ) $(BIN_DIR)
 	echo $(STARTUP_FILE)
 	echo $(STARTUPOBJ)
 	$(LD) $(LDFLAGS) -o $@ $(OBJ) $(STARTUPOBJ)
 	$(SIZE) --format=berkeley $(TARGET) 
 
-$(OBJ_DIR)/%.o: %.c $(OBJ_DIR)
+$(OBJ_DIR)/%.o: %.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
 $(STARTUPOBJ):
