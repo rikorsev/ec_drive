@@ -2,3 +2,9 @@ fmw/build/gcc/obj/*
 fmw/build/gcc/bin/*
 ord/*
 *~
+doc/*
+fmw/GPATH
+fmw/GRTAGS
+fmw/GSYMS
+fmw/GTAGS
+
