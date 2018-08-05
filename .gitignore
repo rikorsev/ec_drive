@@ -1,5 +1,7 @@
-fmw/build/gcc/obj/*
-fmw/build/gcc/bin/*
+fmw/build/gcc/stm32f051/obj/*
+fmw/build/gcc/stm32f051/bin/*
+fmw/build/gcc/stm32f103/obj/*
+fmw/build/gcc/stm32f103/bin/*
 ord/*
 *~
 doc/*
@@ -7,4 +9,3 @@ fmw/GPATH
 fmw/GRTAGS
 fmw/GSYMS
 fmw/GTAGS
-
