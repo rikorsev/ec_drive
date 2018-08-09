@@ -102,8 +102,6 @@ static size_t write_polling(void* buff, size_t len)
 
 static size_t write_interrupt(void* buff, size_t len)
 {
-  uint16_t first_byte = 0;
-
   len = ring_buffer_write(&ecd_dbg_uart_tx_rb, buff, len);
   
   if(USART_GetFlagStatus(ECD_DBG_USART, USART_FLAG_TC) == SET)
@@ -170,7 +168,7 @@ void USART2_IRQHandler(void)
   //  }
 }
 
-static egl_interface_t ecd_dbg_usart = 
+static egl_interface_t ecd_dbg_usart_impl = 
 {
   .init   = init,
   .open   = open,
@@ -181,9 +179,9 @@ static egl_interface_t ecd_dbg_usart =
   .deinit = deinit
 };
 
-egl_interface_t *ecd_dbg_usart_get(void)
+egl_interface_t *ecd_dbg_usart(void)
 {
-  return &ecd_dbg_usart;
+  return &ecd_dbg_usart_impl;
 }
 
 int _write(int file, char *ptr, int len)
@@ -194,7 +192,7 @@ int _write(int file, char *ptr, int len)
     {
     case 1: /* stdout */
     case 2: /* stderr */
-      result = egl_itf_write(ecd_dbg_usart_get(), ptr, (size_t *)&len);
+      result = egl_itf_write(ecd_dbg_usart(), ptr, (size_t *)&len);
       assert(result == EGL_ITF_SUCCESS);
       break;
     default:

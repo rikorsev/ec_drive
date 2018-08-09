@@ -91,7 +91,7 @@ size_t ring_buffer_get_size(ring_buffer_t* prb)
 size_t ring_buffer_get_free_size(ring_buffer_t* prb)
 {
   assert(prb);
-  return prb->size - ring_buffer_get_full_size(prb);
+  return prb->size - ring_buffer_get_full_size(prb) - 1;
 }
 
 size_t ring_buffer_get_full_size(ring_buffer_t* prb)

@@ -35,7 +35,7 @@ void TIM3_IRQHandler(void)
 {
   if(TIM_GetITStatus(TIM3, TIM_IT_Update) == SET)
     {
-      egl_counter_update(ecd_runtime_get());
+      egl_counter_update(ecd_runtime());
       TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
     }
 }

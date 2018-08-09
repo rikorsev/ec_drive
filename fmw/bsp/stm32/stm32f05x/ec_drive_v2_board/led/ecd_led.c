@@ -42,7 +42,7 @@ static void deinit(void)
   GPIO_DeInit(ECD_LED_PORT);
 }
 
-static const egl_led_t ecd_led =
+static const egl_led_t ecd_led_impl =
   {
     .itf =
     {
@@ -56,7 +56,7 @@ static const egl_led_t ecd_led =
     .ctr = &ecd_runtime
   };
 
-egl_led_t* ecd_led_get(void)
+egl_led_t* ecd_led(void)
 {
-  return (egl_led_t *)&ecd_led;
+  return (egl_led_t *)&ecd_led_impl;
 }

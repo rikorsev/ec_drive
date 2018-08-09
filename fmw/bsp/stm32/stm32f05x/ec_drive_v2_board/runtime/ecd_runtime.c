@@ -18,7 +18,7 @@ static void set(uint32_t val)
   runtime_val = val;
 }
 
-const egl_counter_t ecd_runtime =
+const egl_counter_t ecd_runtime_impl =
   {
     .init   = NULL,
     .get    = get,
@@ -27,7 +27,7 @@ const egl_counter_t ecd_runtime =
     .deinit = NULL
   };
 
-egl_counter_t* ecd_runtime_get(void)
+egl_counter_t* ecd_runtime(void)
 {
-  return (egl_counter_t*)&ecd_runtime;
+  return (egl_counter_t*)&ecd_runtime_impl;
 }

@@ -1,3 +1,5 @@
+#define EGL_MODULE_NAME "MAIN"
+
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -7,15 +9,17 @@
 
 int main(void)
 {
+  int i = 0;
   ecd_bsp_init();
 
-  (void)egl_itf_open(ecd_dbg_usart_get());
-
+  egl_itf_open(ecd_dbg_usart());
+  egl_trace_init(EGL_TRACE_LEVEL_DEBUG, ms, NULL, 0);
+  
   while(1)
   {
     egl_delay(ms, 500);
-    egl_led_toggle(ecd_led_get());
-    printf("Hello, world!\r\n");
+    egl_led_toggle(ecd_led());
+    EGL_TRACE_INFO("Hello, world %d, %d\r\n", i++, i++);
   }
 
   return 0;

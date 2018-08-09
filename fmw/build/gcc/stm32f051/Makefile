@@ -24,11 +24,12 @@ INCLUDE+=-I$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Include
 INCLUDE+=-I$(PROJ_ROOT)/bsp/stm32/stm32f05x/ec_drive_v2_board
 INCLUDE+=-I$(BSP_DIR)
 INCLUDE+=-I$(LIB_DIR)
+INCLUDE+=-I$(LIB_DIR)/abst/ringbuffer
 INCLUDE+=-I$(LIB_DIR)/func/count
 INCLUDE+=-I$(LIB_DIR)/func/led
 INCLUDE+=-I$(LIB_DIR)/func/interface
 INCLUDE+=-I$(LIB_DIR)/func/delay
-INCLUDE+=-I$(LIB_DIR)/abst/ringbuffer
+INCLUDE+=-I$(LIB_DIR)/func/trace
 
 # Source files
 # Application source files
@@ -70,11 +71,12 @@ SRC_PERIPH+=$(PERIPH_SRC_DIR)/stm32f0xx_rtc.c
 SRC_PERIPH+=$(PERIPH_SRC_DIR)/stm32f0xx_tim.c
 
 # Embedded General Libary source
+SRC_LIB+=$(LIB_DIR)/abst/ringbuffer/ringbuffer.c
 SRC_LIB+=$(LIB_DIR)/func/led/egl_led.c
 SRC_LIB+=$(LIB_DIR)/func/count/egl_counter.c
 SRC_LIB+=$(LIB_DIR)/func/interface/egl_interface.c
 SRC_LIB+=$(LIB_DIR)/func/delay/egl_delay.c
-SRC_LIB+=$(LIB_DIR)/abst/ringbuffer/ringbuffer.c
+SRC_LIB+=$(LIB_DIR)/func/trace/egl_trace.c
 
 SRC+=$(SRC_PERIPH)
 SRC+=$(SRC_APP)
