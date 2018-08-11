@@ -6,6 +6,8 @@
 #include "clock/ecd_clock.h"
 #include "runtime/ecd_runtime.h"
 #include "dbg_uart/ecd_dbg_uart.h"
+#include "bldc/ecd_bldc_hall.h"
+#include "bldc/ecd_bldc.h"
 
 void ecd_bsp_init(void);
 

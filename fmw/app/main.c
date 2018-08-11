@@ -9,17 +9,20 @@
 
 int main(void)
 {
-  int i = 0;
+  //int i = 0;
   ecd_bsp_init();
 
   egl_itf_open(ecd_dbg_usart());
   egl_trace_init(EGL_TRACE_LEVEL_DEBUG, ms, NULL, 0);
+  egl_bldc_init(ecd_bldc_motor());
+
+  EGL_TRACE_INFO("EC Drive v0.1\r\n");
   
   while(1)
   {
-    egl_delay(ms, 500);
-    egl_led_toggle(ecd_led());
-    EGL_TRACE_INFO("Hello, world %d, %d\r\n", i++, i++);
+    //egl_delay(ms, 500);
+    //egl_led_toggle(ecd_led());
+    //EGL_TRACE_INFO("Hello, world %d, %d\r\n", i++, i++);
   }
 
   return 0;

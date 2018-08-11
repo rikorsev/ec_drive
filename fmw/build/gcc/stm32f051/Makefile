@@ -30,6 +30,7 @@ INCLUDE+=-I$(LIB_DIR)/func/led
 INCLUDE+=-I$(LIB_DIR)/func/interface
 INCLUDE+=-I$(LIB_DIR)/func/delay
 INCLUDE+=-I$(LIB_DIR)/func/trace
+INCLUDE+=-I$(LIB_DIR)/func/bldc
 
 # Source files
 # Application source files
@@ -42,6 +43,8 @@ SRC_BSP+=$(BSP_DIR)/runtime/ecd_runtime.c
 SRC_BSP+=$(BSP_DIR)/clock/ecd_clock.c
 SRC_BSP+=$(BSP_DIR)/main_timer/ecd_main_timer.c
 SRC_BSP+=$(BSP_DIR)/dbg_uart/ecd_dbg_uart.c
+SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_hall.c
+SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc.c
 SRC_BSP+=$(BSP_DIR)/ecd_bsp.c
 
 # Peripheral library files
@@ -77,6 +80,7 @@ SRC_LIB+=$(LIB_DIR)/func/count/egl_counter.c
 SRC_LIB+=$(LIB_DIR)/func/interface/egl_interface.c
 SRC_LIB+=$(LIB_DIR)/func/delay/egl_delay.c
 SRC_LIB+=$(LIB_DIR)/func/trace/egl_trace.c
+SRC_LIB+=$(LIB_DIR)/func/bldc/egl_bldc_motor.c
 
 SRC+=$(SRC_PERIPH)
 SRC+=$(SRC_APP)

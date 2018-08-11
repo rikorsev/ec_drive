@@ -7,5 +7,6 @@
 #include "func/led/egl_led.h"
 #include "func/interface/egl_interface.h"
 #include "func/delay/egl_delay.h"
+#include "func/bldc/egl_bldc_motor.h"
 
 #endif // EGL_LIB_H
