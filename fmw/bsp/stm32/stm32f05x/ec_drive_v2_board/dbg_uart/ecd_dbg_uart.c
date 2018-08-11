@@ -8,7 +8,7 @@
 #define ECD_DBG_USART_RX_PIN         (GPIO_Pin_3)
 #define ECD_DBG_USART_TX_PIN_SRC     (GPIO_PinSource2)
 #define ECD_DBG_USART_RX_PIN_SRC     (GPIO_PinSource3)
-#define ECD_DBG_USART_DEFAULT_SPEED  (9600)
+#define ECD_DBG_USART_DEFAULT_SPEED  (115200)
 #define ECD_DBG_USART_BUFF_SIZE      (512)
 #define ECD_DBG_USART_GPIO_RCC       (RCC_AHBPeriph_GPIOA)
 #define ECD_DBG_USART_RCC            (RCC_APB1Periph_USART2)
