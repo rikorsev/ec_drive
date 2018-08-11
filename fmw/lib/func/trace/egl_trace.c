@@ -61,7 +61,7 @@ void egl_trace(egl_trace_level_t lvl, char* module, char* format, ...)
       
       if(m_tstamp != NULL)
 	{
-	  printf("[%08u] ", egl_counter_get(m_tstamp));
+	  printf("[%08u] ", (unsigned int)egl_counter_get(m_tstamp));
 	}
 
       if(module != NULL)

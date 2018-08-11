@@ -13,13 +13,13 @@ static void init(void)
   /* GPIOA Periph clock enable */
   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
 
-  /* Configure PD0 and PD2 in output pushpull mode */
-  gpio.GPIO_Pin = ECD_LED_PIN;
-  gpio.GPIO_Mode = GPIO_Mode_OUT;
+  /* Configure PA4 in output pushpull mode */
+  gpio.GPIO_Pin   = ECD_LED_PIN;
+  gpio.GPIO_Mode  = GPIO_Mode_OUT;
   gpio.GPIO_OType = GPIO_OType_PP;
   gpio.GPIO_Speed = GPIO_Speed_2MHz;
-  gpio.GPIO_PuPd = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOA, &gpio);
+  gpio.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+  GPIO_Init(ECD_LED_PORT, &gpio);
 }
 
 static void on(void)
