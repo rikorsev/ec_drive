@@ -8,7 +8,7 @@ typedef enum
 {
   EGL_BLDC_MOTOR_READY,
   EGL_BLDC_MOTOR_IN_WORK,
-  EGL_BLDC_MOTOR_HALL_SENSOR_ERROR,
+  EGL_BLDC_MOTOR_ERROR,
   EGL_BLDC_MOTOR_OVERLOAD,
   EGL_BLDC_MOTOR_OVERHEAT,
 }egl_bldc_state_t;
@@ -22,14 +22,14 @@ typedef enum
 typedef struct
 {
   void (*init)        (void);
-  void (*start)       (void);
-  void (*stop)        (void);
+  bool (*start)       (void);
+  bool (*stop)        (void);
   void (*set)         (uint16_t power);
   bool (*switch_wind) (uint8_t hall, egl_bldc_dir_t dir);
   void (*deinit)      (void);
 }egl_bldc_pwm_t;
 
-typedef struct
+typedef struct11
 {
   void    (*init)   (void);
   uint16_t (*get)    (void);

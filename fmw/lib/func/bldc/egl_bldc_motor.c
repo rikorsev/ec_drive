@@ -7,18 +7,17 @@
 
 void egl_bldc_init(egl_bldc_t *motor)
 {
-  /* check if all function pointers are set */
-  /* check pwm functions */
-  /* assert(motor->pwm.init && */
-  /* 	 motor->pwm.start && */
-  /* 	 motor->pwm.stop && */
-  /* 	 motor->pwm.set && */
-  /* 	 motor->pwm.switch_wind); */
-
   /* check hall functions */
-  assert(motor->hall->init   != NULL);
-  assert(motor->hall->get    != NULL);
-  assert(motor->hall->deinit != NULL);
+  assert(motor->hall->init      != NULL);
+  assert(motor->hall->get       != NULL);
+  assert(motor->hall->deinit    != NULL);
+
+  /*check pwm functions */
+  assert(motor->pwm.init        != NULL);
+  assert(motor->pwm.start       != NULL);
+  assert(motor->pwm.stop        != NULL);
+  assert(motor->pwm.set         != NULL);
+  assert(motor->pwm.switch_wind != NULL);
 
   /* check speed functions */
   /* assert(motor->speed.init && */
@@ -33,8 +32,9 @@ void egl_bldc_init(egl_bldc_t *motor)
   /* 	 motor->load.get); */
 
   /* init motor */
-  //motor->pwm.init();
   motor->hall->init();
+  motor->pwm->init();
+
   //motor->speed.init();
   //motor->load.init();
   motor->state  = EGL_BLDC_MOTOR_READY;
@@ -49,35 +49,46 @@ void egl_bldc_hall_handler(egl_bldc_t *motor)
     motor->speed->update();
     if(false == motor->pwm->switch_wind(motor->hall->get(), motor->dir))
       {
-	motor->state = EGL_BLDC_MOTOR_HALL_SENSOR_ERROR;
+	motor->state = EGL_BLDC_MOTOR_ERROR;
       }
    }  
 }
-
+/* TBD: return motor status instead bool */
 bool egl_bldc_start(egl_bldc_t *motor)
 {
+  bool result = false;
 
-  if(motor->state == EGL_BLDC_MOTOR_IN_WORK)
-    {
-      return true;
-    }
-
-  //motor->pwm.set(motor->power);
-  egl_bldc_hall_handler(motor);
-  motor->pwm->start();
-  motor->speed->start();
-  motor->state = EGL_BLDC_MOTOR_IN_WORK;
+  /* TBD: add asserts */
   
-  return true;
+  if(motor->state != EGL_BLDC_MOTOR_IN_WORK)
+    {
+      if(motor->pwm->start() == true)
+	{
+	  egl_bldc_hall_handler(motor);
+	  //motor->speed->start();
+	  motor->state = EGL_BLDC_MOTOR_IN_WORK;
+	  result = true;
+	}
+    }
+  
+  return result;
 }
 
+/* TBD: return motor status instead bool */
 bool egl_bldc_stop(egl_bldc_t *motor)
 {
-  motor->state = EGL_BLDC_MOTOR_READY;
-  motor->pwm->stop();
-  motor->speed->stop();
+  bool result = false;
+
+  /* TBD: add asserts */
   
-  return true;
+  if(motor->pwm->stop() == true)
+    {
+      //motor->speed->stop();
+      motor->state = EGL_BLDC_MOTOR_READY;
+      result = true;
+    }
+  
+  return result;
 }
 
 void egl_bldc_set_dir(egl_bldc_t *motor, egl_bldc_dir_t dir)

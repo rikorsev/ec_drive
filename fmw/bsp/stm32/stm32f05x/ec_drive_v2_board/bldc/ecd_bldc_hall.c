@@ -61,7 +61,7 @@ static void init(void)
 
 static uint16_t get(void)
 {
-  return GPIO_ReadInputData(ECD_BLDC_HALL_PORT);// & ECD_BLDC_HALL_MASK;
+  return GPIO_ReadInputData(ECD_BLDC_HALL_PORT) & ECD_BLDC_HALL_MASK;
 }
 
 static void deinit(void)
@@ -87,14 +87,16 @@ void EXTI0_1_IRQHandler(void)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_1_EXTI);
       egl_led_toggle(ecd_led());
-      EGL_TRACE_INFO("1: 0x%x -> 0x%x\r\n", get(), get() & ECD_BLDC_HALL_MASK);
+      //EGL_TRACE_INFO("H1: 0x%x\r\n", get());
+      egl_bldc_hall_handler(ecd_bldc_motor());
     }
 
   if(EXTI_GetITStatus(ECD_BLDC_HALL_2_EXTI) == SET)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_2_EXTI);
       egl_led_toggle(ecd_led());
-      EGL_TRACE_INFO("2: 0x%x -> 0x%x\r\n", get(), get() & ECD_BLDC_HALL_MASK);
+      //EGL_TRACE_INFO("H2: 0x%x\r\n", get());
+      egl_bldc_hall_handler(ecd_bldc_motor());
     }
 }
 
@@ -104,7 +106,8 @@ void EXTI4_15_IRQHandler(void)\
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_3_EXTI);
       egl_led_toggle(ecd_led());
-      EGL_TRACE_INFO("3: 0x%x -> 0x%x\r\n", get(), get() & ECD_BLDC_HALL_MASK);
+      //EGL_TRACE_INFO("H3: 0x%x\r\n", get());
+      egl_bldc_hall_handler(ecd_bldc_motor());
     }
 }
 
