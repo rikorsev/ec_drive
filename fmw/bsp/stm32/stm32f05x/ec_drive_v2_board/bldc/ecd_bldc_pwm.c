@@ -22,33 +22,33 @@ static void set(uint16_t power)
   
 }
 
-static inline bool switch_wind_cw(uint8_t hall)
+static inline bool switch_wind_cw(egl_bldc_hall_state_t hall)
 {
   bool result = true;
   
   switch(hall)
     {
-    case ECD_BLDC_HALL_STATE_1:
+    case EGL_BLDC_HALL_STATE_1:
       EGL_TRACE_INFO("CW: Stage 1\r\n");
       break;
   
-    case ECD_BLDC_HALL_STATE_2:
+    case EGL_BLDC_HALL_STATE_2:
       EGL_TRACE_INFO("CW: Stage 2\r\n");
       break;
 
-    case ECD_BLDC_HALL_STATE_3:
+    case EGL_BLDC_HALL_STATE_3:
       EGL_TRACE_INFO("CW: Stage 3\r\n");
       break;
 
-    case ECD_BLDC_HALL_STATE_4:
+    case EGL_BLDC_HALL_STATE_4:
       EGL_TRACE_INFO("CW: Stage 4\r\n");
       break;
        
-    case ECD_BLDC_HALL_STATE_5:
+    case EGL_BLDC_HALL_STATE_5:
       EGL_TRACE_INFO("CW: Stage 5\r\n");
       break;
 
-    case ECD_BLDC_HALL_STATE_6:
+    case EGL_BLDC_HALL_STATE_6:
       EGL_TRACE_INFO("CW: Stage 6\r\n");
       break;
 
@@ -60,33 +60,33 @@ static inline bool switch_wind_cw(uint8_t hall)
   return result;
 }
 
-static inline bool switch_wind_ccw(uint8_t hall)
+static inline bool switch_wind_ccw(egl_bldc_hall_state_t hall)
 {
   bool result = true;
   
   switch(hall)
     {
-    case ECD_BLDC_HALL_STATE_1:
+    case EGL_BLDC_HALL_STATE_1:
       EGL_TRACE_INFO("CCW: Stage 1\r\n");
       break;
   
-    case ECD_BLDC_HALL_STATE_2:
+    case EGL_BLDC_HALL_STATE_2:
       EGL_TRACE_INFO("CCW: Stage 2\r\n");
       break;
 
-    case ECD_BLDC_HALL_STATE_3:
+    case EGL_BLDC_HALL_STATE_3:
       EGL_TRACE_INFO("CCW: Stage 3\r\n");
       break;
 
-    case ECD_BLDC_HALL_STATE_4:
+    case EGL_BLDC_HALL_STATE_4:
       EGL_TRACE_INFO("CCW: Stage 4\r\n");
       break;
        
-    case ECD_BLDC_HALL_STATE_5:
+    case EGL_BLDC_HALL_STATE_5:
       EGL_TRACE_INFO("CCW: Stage 5\r\n");
       break;
 
-    case ECD_BLDC_HALL_STATE_6:
+    case EGL_BLDC_HALL_STATE_6:
       EGL_TRACE_INFO("CCW: Stage 6\r\n");
       break;
 
@@ -98,7 +98,7 @@ static inline bool switch_wind_ccw(uint8_t hall)
   return result;
 }
 
-static bool switch_wind(uint8_t hall, egl_bldc_dir_t dir)
+static bool switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
 {
   bool result = true;
   
@@ -108,16 +108,16 @@ static bool switch_wind(uint8_t hall, egl_bldc_dir_t dir)
       result = switch_wind_cw(hall);
       break;
 
-    case EGL_BLDC_MOTOR_DIR_CCW
+    case EGL_BLDC_MOTOR_DIR_CCW:
       result = switch_wind_ccw(hall);
       break;
 
     default:
       EGL_TRACE_ERROR("Unknow direction 0x%x\r\n", dir);
-      result = EGL_BLDC_MOTOR_HALL_DIR_ERROR;
+      result = EGL_BLDC_MOTOR_ERROR;
     }
 
-  return state;
+  return result;
 }
 
 static void deinit(void)
@@ -131,6 +131,6 @@ egl_bldc_pwm_t ecd_bldc_pwm_impl =
     .start       = start,
     .stop        = stop,
     .set         = set,
-    .switch_wind = swithc_wind,
+    .switch_wind = switch_wind,
     .deinit      = deinit
   };

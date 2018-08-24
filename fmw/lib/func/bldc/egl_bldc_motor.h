@@ -15,6 +15,17 @@ typedef enum
 
 typedef enum
 {
+  EGL_BLDC_HALL_STATE_1,
+  EGL_BLDC_HALL_STATE_2,
+  EGL_BLDC_HALL_STATE_3,
+  EGL_BLDC_HALL_STATE_4,
+  EGL_BLDC_HALL_STATE_5,
+  EGL_BLDC_HALL_STATE_6,
+  EGL_BLDC_HALL_STATE_ERROR,
+}egl_bldc_hall_state_t;
+
+typedef enum
+{
   EGL_BLDC_MOTOR_DIR_CW,
   EGL_BLDC_MOTOR_DIR_CCW
 }egl_bldc_dir_t;
@@ -25,15 +36,15 @@ typedef struct
   bool (*start)       (void);
   bool (*stop)        (void);
   void (*set)         (uint16_t power);
-  bool (*switch_wind) (uint8_t hall, egl_bldc_dir_t dir);
+  bool (*switch_wind) (egl_bldc_hall_state_t hall, egl_bldc_dir_t dir);
   void (*deinit)      (void);
 }egl_bldc_pwm_t;
 
-typedef struct11
+typedef struct
 {
-  void    (*init)   (void);
-  uint16_t (*get)    (void);
-  void    (*deinit) (void);
+  void                  (*init)   (void);
+  egl_bldc_hall_state_t (*get)    (void);
+  void                  (*deinit) (void);
 }egl_bldc_hall_t;
 
 typedef struct

@@ -44,6 +44,7 @@ SRC_BSP+=$(BSP_DIR)/clock/ecd_clock.c
 SRC_BSP+=$(BSP_DIR)/main_timer/ecd_main_timer.c
 SRC_BSP+=$(BSP_DIR)/dbg_uart/ecd_dbg_uart.c
 SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_hall.c
+SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_pwm.c
 SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc.c
 SRC_BSP+=$(BSP_DIR)/ecd_bsp.c
 

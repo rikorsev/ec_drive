@@ -13,11 +13,11 @@ void egl_bldc_init(egl_bldc_t *motor)
   assert(motor->hall->deinit    != NULL);
 
   /*check pwm functions */
-  assert(motor->pwm.init        != NULL);
-  assert(motor->pwm.start       != NULL);
-  assert(motor->pwm.stop        != NULL);
-  assert(motor->pwm.set         != NULL);
-  assert(motor->pwm.switch_wind != NULL);
+  assert(motor->pwm->init        != NULL);
+  assert(motor->pwm->start       != NULL);
+  assert(motor->pwm->stop        != NULL);
+  assert(motor->pwm->set         != NULL);
+  assert(motor->pwm->switch_wind != NULL);
 
   /* check speed functions */
   /* assert(motor->speed.init && */

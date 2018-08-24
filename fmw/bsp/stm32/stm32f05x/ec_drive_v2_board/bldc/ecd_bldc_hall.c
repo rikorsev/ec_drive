@@ -12,6 +12,13 @@
 #define ECD_BLDC_HALL_2_PIN        (GPIO_Pin_1)
 #define ECD_BLDC_HALL_3_PIN        (GPIO_Pin_11)
 
+#define ECD_BLDC_HALL_STATE_1      (ECD_BLDC_HALL_1_PIN | ECD_BLDC_HALL_3_PIN)
+#define ECD_BLDC_HALL_STATE_2      (ECD_BLDC_HALL_1_PIN)
+#define ECD_BLDC_HALL_STATE_3      (ECD_BLDC_HALL_1_PIN | ECD_BLDC_HALL_2_PIN)
+#define ECD_BLDC_HALL_STATE_4      (ECD_BLDC_HALL_2_PIN)
+#define ECD_BLDC_HALL_STATE_5      (ECD_BLDC_HALL_2_PIN | ECD_BLDC_HALL_3_PIN)
+#define ECD_BLDC_HALL_STATE_6      (ECD_BLDC_HALL_3_PIN)
+
 #define ECD_BLDC_HALL_1_EXTI       (EXTI_Line0)
 #define ECD_BLDC_HALL_2_EXTI       (EXTI_Line1)
 #define ECD_BLDC_HALL_3_EXTI       (EXTI_Line11)
@@ -59,9 +66,39 @@ static void init(void)
   EXTI_Init(&exti);
 }
 
-static uint16_t get(void)
+static egl_bldc_hall_state_t get(void)
 {
-  return GPIO_ReadInputData(ECD_BLDC_HALL_PORT) & ECD_BLDC_HALL_MASK;
+  egl_bldc_hall_state_t state = EGL_BLDC_HALL_STATE_ERROR;
+  uint16_t hall_gpio = GPIO_ReadInputData(ECD_BLDC_HALL_PORT) & ECD_BLDC_HALL_MASK;
+
+  switch(hall_gpio)
+    {
+    case ECD_BLDC_HALL_STATE_1:
+      state = EGL_BLDC_HALL_STATE_1;
+      break;
+
+    case ECD_BLDC_HALL_STATE_2:
+      state = EGL_BLDC_HALL_STATE_1;
+      break;
+
+    case ECD_BLDC_HALL_STATE_3:
+      state = EGL_BLDC_HALL_STATE_1;
+      break;
+
+    case ECD_BLDC_HALL_STATE_4:
+      state = EGL_BLDC_HALL_STATE_1;
+      break;
+
+    case ECD_BLDC_HALL_STATE_5:
+      state = EGL_BLDC_HALL_STATE_1;
+      break;
+
+    case ECD_BLDC_HALL_STATE_6:
+      state = EGL_BLDC_HALL_STATE_1;
+      break;
+    }
+
+  return state;
 }
 
 static void deinit(void)
@@ -87,7 +124,6 @@ void EXTI0_1_IRQHandler(void)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_1_EXTI);
       egl_led_toggle(ecd_led());
-      //EGL_TRACE_INFO("H1: 0x%x\r\n", get());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
 
@@ -95,7 +131,6 @@ void EXTI0_1_IRQHandler(void)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_2_EXTI);
       egl_led_toggle(ecd_led());
-      //EGL_TRACE_INFO("H2: 0x%x\r\n", get());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
 }
@@ -106,7 +141,6 @@ void EXTI4_15_IRQHandler(void)\
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_3_EXTI);
       egl_led_toggle(ecd_led());
-      //EGL_TRACE_INFO("H3: 0x%x\r\n", get());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
 }
