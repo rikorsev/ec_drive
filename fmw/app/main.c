@@ -1,5 +1,6 @@
 #define EGL_MODULE_NAME "MAIN"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -17,7 +18,7 @@ int main(void)
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
   egl_bldc_start(ecd_bldc_motor());
-  
+
   while(1)
   {
 
@@ -37,10 +38,23 @@ int main(void)
   */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
-  while (1)
-  {}
+  __assert_func((const char *)file, line, NULL, NULL);
 }
 #endif
+
+void __assert_func(const char * file, int line , const char * func, const char *expr)
+{
+  /* Disable interrupts */
+  __disable_irq();
+  
+  /* Swich to polling mode */
+  egl_itf_ioctl(ecd_dbg_usart(), ECD_DBG_UART_WRITE_POLLING_IOCTL, NULL, 0);
+
+  /* Trace fail message */
+  EGL_TRACE_FAIL("Critical fail! file: %s, line: %d, func: %s, expr: %s\r\n", file, line, func, expr);
+  
+  while (1)
+    {
+      /* Do nothing */
+    }
+}

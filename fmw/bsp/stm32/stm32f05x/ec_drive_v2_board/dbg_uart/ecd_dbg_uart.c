@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "stm32f0xx.h"
 #include "egl_lib.h"
+#include "ecd_dbg_uart.h"
 
 #define ECD_DBG_USART                (USART2)
 #define ECD_DBG_USART_PORT           (GPIOA)
@@ -14,7 +15,6 @@
 #define ECD_DBG_USART_RCC            (RCC_APB1Periph_USART2)
 
 DECLARE_RING_BUFFER(ecd_dbg_uart_tx_rb, ECD_DBG_USART_BUFF_SIZE);
-// DECLARE_RING_BUFFER(ecd_dbg_uart_rx_rb, ECD_DBG_USART_BUFF_SIZE);
 
 static void init(void)
 {
@@ -69,8 +69,6 @@ static void init(void)
   nvic.NVIC_IRQChannelPriority     = 0;
   nvic.NVIC_IRQChannelCmd          = ENABLE;
   NVIC_Init(&nvic);
-
-  //USART_ITConfig(ECD_DBG_USART, USART_IT_RXNE, ENABLE);
 }
 
 static egl_itf_status_t open(void)
@@ -85,6 +83,20 @@ static size_t write_polling(void* buff, size_t len)
 {
   int i;
   uint8_t* data_ptr = (uint8_t *)buff;
+  uint8_t data = 0;
+
+  /* flush data from ringbuffer if any */
+  while(ring_buffer_get_full_size(&ecd_dbg_uart_tx_rb) > 0)
+    {
+      (void)ring_buffer_read(&ecd_dbg_uart_tx_rb, &data, 1);
+
+      while(USART_GetFlagStatus(ECD_DBG_USART, USART_FLAG_TXE) != SET)
+	{
+	  /* Do nothing */
+	}
+
+      USART_SendData(ECD_DBG_USART, (uint16_t)data);
+    }
   
   for(i = 0; i < len; i++)
     {    
@@ -112,10 +124,23 @@ static size_t write_interrupt(void* buff, size_t len)
   return len;
 }
 
-//static size_t read(void* buff, size_t len)
-//{
-//  return ring_buffer_read(&ecd_dbg_uart_tx_rb, buff, len);
-//}
+static egl_itf_status_t ioctl(uint8_t opcode, void* data, size_t len)
+{
+  switch(opcode)
+    {
+      
+    case ECD_DBU_UART_WRITE_INTERRUPT_IOCTL:
+      ecd_dbg_usart()->write = write_interrupt;
+      break;
+      
+    case ECD_DBG_UART_WRITE_POLLING_IOCTL:
+      ecd_dbg_usart()->write = write_polling;
+      break;
+      
+    }
+
+  return EGL_ITF_SUCCESS;
+}
 
 static egl_itf_status_t close(void)
 {
@@ -159,13 +184,7 @@ void USART2_IRQHandler(void)
 	  /* Disable interrupt at the end of transmission */
 	  USART_ITConfig(ECD_DBG_USART, USART_IT_TXE, DISABLE);
 	}
-    }
-  
-  //if(USART_GetITStatus(ECD_DBG_USART, USART_IT_RXNE) == SET)
-  //  {
-  //    data = (uint8_t)USART_ReceiveData(ECD_DBG_USART);
-  //    (void)ring_buffer_write(&ecd_dbg_uart_rx_rb, &data, 1);
-  //  }
+    } 
 }
 
 static egl_interface_t ecd_dbg_usart_impl = 
@@ -173,7 +192,7 @@ static egl_interface_t ecd_dbg_usart_impl =
   .init   = init,
   .open   = open,
   .write  = write_interrupt,
-  .ioctl  = NULL,
+  .ioctl  = ioctl,
   .read   = NULL,
   .close  = close,
   .deinit = deinit
