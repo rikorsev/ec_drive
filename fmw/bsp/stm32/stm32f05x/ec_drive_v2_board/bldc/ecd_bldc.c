@@ -1,11 +1,11 @@
 #include "egl_lib.h"
 
-
 extern egl_bldc_hall_t ecd_bldc_hall_impl;
+extern egl_bldc_pwm_t  ecd_bldc_pwm_impl;
 
 egl_bldc_t ecd_blds_impl =
   {
-    .pwm   = NULL,
+    .pwm   = &ecd_bldc_pwm_impl,
     .hall  = &ecd_bldc_hall_impl,
     .speed = NULL,
     .load  = NULL

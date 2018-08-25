@@ -78,23 +78,23 @@ static egl_bldc_hall_state_t get(void)
       break;
 
     case ECD_BLDC_HALL_STATE_2:
-      state = EGL_BLDC_HALL_STATE_1;
+      state = EGL_BLDC_HALL_STATE_2;
       break;
 
     case ECD_BLDC_HALL_STATE_3:
-      state = EGL_BLDC_HALL_STATE_1;
+      state = EGL_BLDC_HALL_STATE_3;
       break;
 
     case ECD_BLDC_HALL_STATE_4:
-      state = EGL_BLDC_HALL_STATE_1;
+      state = EGL_BLDC_HALL_STATE_4;
       break;
 
     case ECD_BLDC_HALL_STATE_5:
-      state = EGL_BLDC_HALL_STATE_1;
+      state = EGL_BLDC_HALL_STATE_5;
       break;
 
     case ECD_BLDC_HALL_STATE_6:
-      state = EGL_BLDC_HALL_STATE_1;
+      state = EGL_BLDC_HALL_STATE_6;
       break;
     }
 

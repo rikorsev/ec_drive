@@ -8,11 +8,13 @@
 void egl_bldc_init(egl_bldc_t *motor)
 {
   /* check hall functions */
+  assert(motor->hall            != NULL);
   assert(motor->hall->init      != NULL);
   assert(motor->hall->get       != NULL);
   assert(motor->hall->deinit    != NULL);
 
   /*check pwm functions */
+  assert(motor->pwm              != NULL);
   assert(motor->pwm->init        != NULL);
   assert(motor->pwm->start       != NULL);
   assert(motor->pwm->stop        != NULL);
@@ -46,7 +48,7 @@ void egl_bldc_hall_handler(egl_bldc_t *motor)
 {
   if(motor->state == EGL_BLDC_MOTOR_IN_WORK)
   {
-    motor->speed->update();
+    //motor->speed->update();
     if(false == motor->pwm->switch_wind(motor->hall->get(), motor->dir))
       {
 	motor->state = EGL_BLDC_MOTOR_ERROR;
