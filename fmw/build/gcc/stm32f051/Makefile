@@ -5,7 +5,8 @@ SIZE=arm-none-eabi-size
 OBJCOPY=arm-none-eabi-objcopy
 STFLASH=st-flash
 OPENOCD=openocd
-GDB=arm-none-eabi-gdb
+#GDB=arm-none-eabi-gdb
+GDB=gdb-multiarch
 
 # Pathes
 OBJ_DIR=./obj
@@ -18,7 +19,7 @@ PERIPH_CMSIS_DIR=$(PERIPH_DIR)/Libraries/CMSIS
 BSP_DIR=$(PROJ_ROOT)/bsp/stm32/stm32f05x/ec_drive_v2_board
 
 # Include pathes
-INCLUDE+=-I$(PERIPH_DIR)/Libraries/STM32F0xx_StdPeriph_Driver/inc 
+INCLUDE+=-I$(PERIPH_DIR)/Libraries/STM32F0xx_StdPeriph_Driver/inc
 INCLUDE+=-I$(PERIPH_CMSIS_DIR)/Include
 INCLUDE+=-I$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Include
 INCLUDE+=-I$(PROJ_ROOT)/bsp/stm32/stm32f05x/ec_drive_v2_board
@@ -111,12 +112,12 @@ CFLAGS=                            \
 -ffunction-sections                \
 -DSTM32F051                        \
 -DUSE_STDPERIPH_DRIVER             \
--DUSE_FULL_ASSERT                  
+-DUSE_FULL_ASSERT
 
 # Linker flags
 LDFLAGS=                           \
---specs=nosys.specs                \
 --specs=nano.specs                 \
+--specs=nosys.specs                \
 -mcpu=cortex-m0                    \
 -mthumb                            \
 -Wl,--defsym=__HEAP_SIZE=0x0000    \
