@@ -66,9 +66,9 @@ bool egl_bldc_start(egl_bldc_t *motor)
     {
       if(motor->pwm->start() == true)
 	{
+	  motor->state = EGL_BLDC_MOTOR_IN_WORK;
 	  egl_bldc_hall_handler(motor);
 	  //motor->speed->start();
-	  motor->state = EGL_BLDC_MOTOR_IN_WORK;
 	  result = true;
 	}
     }

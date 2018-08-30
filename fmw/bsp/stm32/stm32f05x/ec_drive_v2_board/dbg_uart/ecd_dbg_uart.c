@@ -13,6 +13,7 @@
 #define ECD_DBG_USART_BUFF_SIZE      (512)
 #define ECD_DBG_USART_GPIO_RCC       (RCC_AHBPeriph_GPIOA)
 #define ECD_DBG_USART_RCC            (RCC_APB1Periph_USART2)
+#define ECD_DBG_USART_IRQ_PRIORITY   (1)
 
 DECLARE_RING_BUFFER(ecd_dbg_uart_tx_rb, ECD_DBG_USART_BUFF_SIZE);
 
@@ -66,7 +67,7 @@ static void init(void)
 
   /* Enable the USART Interrupt */
   nvic.NVIC_IRQChannel             = USART2_IRQn;
-  nvic.NVIC_IRQChannelPriority     = 0;
+  nvic.NVIC_IRQChannelPriority     = ECD_DBG_USART_IRQ_PRIORITY;
   nvic.NVIC_IRQChannelCmd          = ENABLE;
   NVIC_Init(&nvic);
 }
