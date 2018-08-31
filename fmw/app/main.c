@@ -18,7 +18,7 @@ int main(void)
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
   egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
-  egl_bldc_set_power(ecd_bldc_motor(), 162);
+  egl_bldc_set_power(ecd_bldc_motor(), 163);
   egl_bldc_start(ecd_bldc_motor());
 
   while(1)
