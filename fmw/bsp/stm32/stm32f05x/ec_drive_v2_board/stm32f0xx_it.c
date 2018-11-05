@@ -28,8 +28,8 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include <assert.h>
 #include "stm32f0xx_it.h"
-
 /** @addtogroup STM32F0xx_StdPeriph_Examples
   * @{
   */
@@ -56,6 +56,7 @@
   */
 void NMI_Handler(void)
 {
+  assert(0);
 }
 
 /**
@@ -65,10 +66,7 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
-  }
+  assert(0);
 }
 
 /**
@@ -78,6 +76,7 @@ void HardFault_Handler(void)
   */
 void SVC_Handler(void)
 {
+  assert(0);
 }
 
 /**
@@ -87,6 +86,7 @@ void SVC_Handler(void)
   */
 void PendSV_Handler(void)
 {
+  assert(0);
 }
 
 /**
@@ -96,6 +96,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+  assert(0);
 }
 
 /******************************************************************************/
