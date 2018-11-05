@@ -70,7 +70,8 @@ void __assert_func(const char * file, int line , const char * func, const char *
   egl_itf_ioctl(ecd_dbg_usart(), ECD_DBG_UART_WRITE_POLLING_IOCTL, NULL, 0);
 
   /* Trace fail message */
-  EGL_TRACE_FAIL("Critical fail! file: %s, line: %d, func: %s, expr: %s\r\n", file, line, func, expr);
+  EGL_TRACE_FAIL("Critical fail! file: %s, line: %d, func: %s, expr: %s\r\n",
+                                                     file, line, func, expr);
   
   while (1)
     {
