@@ -44,17 +44,6 @@ void egl_bldc_init(egl_bldc_t *motor)
   motor->power  = 0;
 }
 
-void egl_bldc_hall_handler(egl_bldc_t *motor)
-{
-  if(motor->state == EGL_BLDC_MOTOR_IN_WORK)
-  {
-    //motor->speed->update();
-    if(false == motor->pwm->switch_wind(motor->hall->get(), motor->dir))
-      {
-	motor->state = EGL_BLDC_MOTOR_ERROR;
-      }
-   }  
-}
 /* TBD: return motor status instead bool */
 bool egl_bldc_start(egl_bldc_t *motor)
 {
@@ -92,6 +81,21 @@ bool egl_bldc_stop(egl_bldc_t *motor)
   
   return result;
 }
+
+/*TBD: return motor status */
+void egl_bldc_hall_handler(egl_bldc_t *motor)
+{
+  if(motor->state == EGL_BLDC_MOTOR_IN_WORK)
+  {
+    //motor->speed->update();
+    if(false == motor->pwm->switch_wind(motor->hall->get(), motor->dir))
+      {
+	egl_bldc_stop(motor);
+	motor->state = EGL_BLDC_MOTOR_ERROR;
+      }
+   }  
+}
+
 
 void egl_bldc_set_dir(egl_bldc_t *motor, egl_bldc_dir_t dir)
 {

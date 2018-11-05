@@ -39,13 +39,12 @@ static void init(void)
                                  ECD_BLDC_HALL_2_PIN | \
                                  ECD_BLDC_HALL_3_PIN;
   gpio.GPIO_Mode               = GPIO_Mode_IN;
-  gpio.GPIO_OType              = GPIO_OType_PP;
-  gpio.GPIO_Speed              = GPIO_Mode_IN;
+  gpio.GPIO_Speed              = GPIO_Speed_2MHz;
   gpio.GPIO_PuPd               = GPIO_PuPd_NOPULL;
   GPIO_Init(ECD_BLDC_HALL_PORT, &gpio);
 
   /* Set interrupt handling */
-  nvic.NVIC_IRQChannel         = EXTI0_1_IRQn;//ECD_BLDC_HALL_IRQ;
+  nvic.NVIC_IRQChannel         = EXTI0_1_IRQn;
   nvic.NVIC_IRQChannelPriority = ECD_BLDC_HALL_IRQ_PRIORITY;
   nvic.NVIC_IRQChannelCmd      = ENABLE;
   NVIC_Init(&nvic);
@@ -123,23 +122,26 @@ void EXTI0_1_IRQHandler(void)
   if(EXTI_GetITStatus(ECD_BLDC_HALL_1_EXTI) == SET)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_1_EXTI);
+
       egl_led_toggle(ecd_led());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
-
+  
   if(EXTI_GetITStatus(ECD_BLDC_HALL_2_EXTI) == SET)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_2_EXTI);
+
       egl_led_toggle(ecd_led());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
 }
 
-void EXTI4_15_IRQHandler(void)\
+void EXTI4_15_IRQHandler(void)
 {
   if(EXTI_GetITStatus(ECD_BLDC_HALL_3_EXTI) == SET)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_3_EXTI);
+
       egl_led_toggle(ecd_led());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }

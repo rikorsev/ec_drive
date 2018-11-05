@@ -31,7 +31,6 @@
 #define ECD_BLDC_PWM_TIMER         (TIM1)
 #define ECD_BLDC_PWM_PERIOD        (320) /* To provide 50kHz PWM frequency (16MHz/50kHz = 320)*/
 #define ECD_BLDC_PWM_DEADTIME      (4)
-//#define ECD_BLDC_PWM_IRQ_PRIORITY  (0)
 
 static void init(void)
 {
@@ -53,8 +52,9 @@ static void init(void)
                                 ECD_BLDC_PWM_C2P_PIN | \
                                 ECD_BLDC_PWM_C3P_PIN;
   gpio.GPIO_Mode              = GPIO_Mode_AF;
-  gpio.GPIO_Speed             = GPIO_Speed_50MHz;
+  gpio.GPIO_Speed             = GPIO_Speed_10MHz;
   gpio.GPIO_OType             = GPIO_OType_PP;
+  //gpio.GPIO_PuPd              = GPIO_PuPd_DOWN;
   gpio.GPIO_PuPd              = GPIO_PuPd_NOPULL;
   GPIO_Init(ECD_BLDC_PWM_1_PORT, &gpio);
 
@@ -80,7 +80,7 @@ static void init(void)
   TIM_TimeBaseInit(ECD_BLDC_PWM_TIMER, &timer);
 
   /* Channel 1, 2,3 and 4 Configuration in PWM mode */
-  tim_oc.TIM_OCMode           = TIM_OCMode_PWM1;
+  tim_oc.TIM_OCMode           = TIM_OCMode_Inactive;
   tim_oc.TIM_OutputState      = TIM_OutputState_Disable;
   tim_oc.TIM_OutputNState     = TIM_OutputNState_Disable;
   tim_oc.TIM_Pulse            = 0;
@@ -93,7 +93,7 @@ static void init(void)
   TIM_OC2Init(ECD_BLDC_PWM_TIMER, &tim_oc);
   TIM_OC3Init(ECD_BLDC_PWM_TIMER, &tim_oc);
 
-  /* Automatic Output enable, Break, dead time and lock configuration*/
+  /* Automatic Output enable, Break, dead time and lock configuration */
   bdtr.TIM_OSSRState          = TIM_OSSRState_Enable;
   bdtr.TIM_OSSIState          = TIM_OSSIState_Disable;
   bdtr.TIM_LOCKLevel          = TIM_LOCKLevel_1;
@@ -105,25 +105,13 @@ static void init(void)
   TIM_BDTRConfig(ECD_BLDC_PWM_TIMER, &bdtr);
 
   TIM_CCPreloadControl(ECD_BLDC_PWM_TIMER, ENABLE);
-
-  /* Enable the TIM1 Trigger and commutation interrupt */
-  //nvic.NVIC_IRQChannel             = TIM1_BRK_UP_TRG_COM_IRQn;
-  //nvic.NVIC_IRQChannelPriority     = ECD_BLDC_PWM_IRQ_PRIORITY;
-  //nvic.NVIC_IRQChannelCmd          = ENABLE;
-  //NVIC_Init(&nvic);   
 } 
 
 static bool start(void)
 {
-  /* Enable COM IRQ */
-  //TIM_ITConfig(ECD_BLDC_PWM_TIMER, TIM_IT_COM, ENABLE);
-
   /* TIM1 counter enable */
   TIM_Cmd(ECD_BLDC_PWM_TIMER, ENABLE);
 
-  /* perform switching of windings before start */
-  //egl_bldc_hall_handler(ecd_bldc_motor());
-  
   /* Main Output Enable */
   TIM_CtrlPWMOutputs(ECD_BLDC_PWM_TIMER, ENABLE);
   
@@ -132,9 +120,6 @@ static bool start(void)
 
 static bool stop(void)
 {
-    /* Disable COM IRQ */
-  //TIM_ITConfig(ECD_BLDC_PWM_TIMER, TIM_IT_COM, DISABLE);
-
   /* TIM1 counter disable */
   TIM_Cmd(ECD_BLDC_PWM_TIMER, DISABLE);
 
@@ -170,6 +155,7 @@ static inline void swich_cw_stage_1(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
 
   /*  Channel3 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
 }
@@ -183,6 +169,7 @@ static inline void swich_cw_stage_2(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
 
   /*  Channel2 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
 
@@ -196,6 +183,7 @@ static inline void swich_cw_stage_2(void)
 static inline void swich_cw_stage_3(void)
 {
   /*  Channel1 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
 
@@ -224,6 +212,7 @@ static inline void swich_cw_stage_4(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
 
   /*  Channel3 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
 }
@@ -237,6 +226,7 @@ static inline void swich_cw_stage_5(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
 
   /*  Channel2 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
 
@@ -250,6 +240,7 @@ static inline void swich_cw_stage_5(void)
 static inline void swich_cw_stage_6(void)
 {
   /*  Channel1 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
 
@@ -278,6 +269,7 @@ static inline void swich_ccw_stage_1(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
 
   /*  Channel3 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
 }
@@ -291,6 +283,7 @@ static inline void swich_ccw_stage_2(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
 
   /*  Channel2 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
 
@@ -304,6 +297,7 @@ static inline void swich_ccw_stage_2(void)
 static inline void swich_ccw_stage_3(void)
 {
   /*  Channel1 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
 
@@ -332,6 +326,7 @@ static inline void swich_ccw_stage_4(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
 
   /*  Channel3 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
 }
@@ -344,6 +339,7 @@ static inline void swich_ccw_stage_5(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
 
   /*  Channel2 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
 
@@ -357,6 +353,7 @@ static inline void swich_ccw_stage_5(void)
 static inline void swich_ccw_stage_6(void)
 {
   /*  Channel1 configuration */
+  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
   TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
 
@@ -378,32 +375,26 @@ static inline bool switch_wind_cw(egl_bldc_hall_state_t hall)
   switch(hall)
     {
     case EGL_BLDC_HALL_STATE_1:
-      EGL_TRACE_INFO("CW: Stage 1\r\n");
       swich_cw_stage_1();
       break;
   
     case EGL_BLDC_HALL_STATE_2:
-      EGL_TRACE_INFO("CW: Stage 2\r\n");
       swich_cw_stage_2();
       break;
 
     case EGL_BLDC_HALL_STATE_3:
-      EGL_TRACE_INFO("CW: Stage 3\r\n");
       swich_cw_stage_3();
       break;
 
     case EGL_BLDC_HALL_STATE_4:
-      EGL_TRACE_INFO("CW: Stage 4\r\n");
       swich_cw_stage_4();
       break;
        
     case EGL_BLDC_HALL_STATE_5:
-      EGL_TRACE_INFO("CW: Stage 5\r\n");
       swich_cw_stage_5();
       break;
 
     case EGL_BLDC_HALL_STATE_6:
-      EGL_TRACE_INFO("CW: Stage 6\r\n");
       swich_cw_stage_6();
       break;
 
@@ -422,32 +413,26 @@ static inline bool switch_wind_ccw(egl_bldc_hall_state_t hall)
   switch(hall)
     {
     case EGL_BLDC_HALL_STATE_1:
-      EGL_TRACE_INFO("CCW: Stage 1\r\n");
       swich_ccw_stage_1();
       break;
   
     case EGL_BLDC_HALL_STATE_2:
-      EGL_TRACE_INFO("CCW: Stage 2\r\n");
       swich_ccw_stage_2();
       break;
 
     case EGL_BLDC_HALL_STATE_3:
-      EGL_TRACE_INFO("CCW: Stage 3\r\n");
       swich_ccw_stage_3();
       break;
 
     case EGL_BLDC_HALL_STATE_4:
-      EGL_TRACE_INFO("CCW: Stage 4\r\n");
       swich_ccw_stage_4();
       break;
        
     case EGL_BLDC_HALL_STATE_5:
-      EGL_TRACE_INFO("CCW: Stage 5\r\n");
       swich_ccw_stage_5();
       break;
 
     case EGL_BLDC_HALL_STATE_6:
-      EGL_TRACE_INFO("CCW: Stage 6\r\n");
       swich_ccw_stage_6();
       break;
 
@@ -462,7 +447,7 @@ static inline bool switch_wind_ccw(egl_bldc_hall_state_t hall)
 static bool switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
 {
   bool result = true;
-
+  
   switch(dir)
     {
     case EGL_BLDC_MOTOR_DIR_CW:
@@ -477,7 +462,7 @@ static bool switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
       EGL_TRACE_ERROR("Unknow direction 0x%x\r\n", dir);
       result = false;
     }
-
+  
   if(result != false)
     {
       TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_Break);
@@ -492,14 +477,6 @@ static void deinit(void)
 {
   
 }
-
-//void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
-//{
-//  if(TIM_GetITStatus(ECD_BLDC_PWM_TIMER, TIM_IT_COM) == SET)
-//    {
-//      TIM_ClearITPendingBit(ECD_BLDC_PWM_TIMER, TIM_IT_COM);
-//    }
-//}
 
 egl_bldc_pwm_t ecd_bldc_pwm_impl =
   {

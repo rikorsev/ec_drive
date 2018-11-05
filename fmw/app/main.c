@@ -17,13 +17,27 @@ int main(void)
 
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
-  egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
-  egl_bldc_set_power(ecd_bldc_motor(), 160);
+  egl_led_on(ecd_led());
+  
+  //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
+  egl_bldc_set_power(ecd_bldc_motor(), 64);
   egl_bldc_start(ecd_bldc_motor());
 
   while(1)
   {
+    //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CW);
+    //egl_bldc_start(ecd_bldc_motor());
+    //egl_delay(ms, 1000);
+    //egl_bldc_stop(ecd_bldc_motor());
 
+    //egl_delay(ms, 1000);
+
+    //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
+    //egl_bldc_start(ecd_bldc_motor());
+    //egl_delay(ms, 1000);
+    //egl_bldc_stop(ecd_bldc_motor());
+
+    //egl_delay(ms, 1000);
   }
 
   return 0;
@@ -48,6 +62,9 @@ void __assert_func(const char * file, int line , const char * func, const char *
 {
   /* Disable interrupts */
   __disable_irq();
+
+  /* Stop motor if running */
+  egl_bldc_stop(ecd_bldc_motor());
   
   /* Swich to polling mode */
   egl_itf_ioctl(ecd_dbg_usart(), ECD_DBG_UART_WRITE_POLLING_IOCTL, NULL, 0);
