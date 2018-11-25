@@ -29,16 +29,17 @@ void egl_bldc_init(egl_bldc_t *motor)
   /* 	 motor->speed.get); */
 
   /* check load functions */
-  /* assert(motor->load.init && */
-  /* 	 motor->load.update && */
-  /* 	 motor->load.get); */
+  assert(motor->load->init       != NULL);
+  assert(motor->load->update     != NULL);
+  assert(motor->load->get        != NULL);
+  assert(motor->load->deinit     != NULL);
 
   /* init motor */
   motor->hall->init();
   motor->pwm->init();
-
+  motor->load->init();
   //motor->speed.init();
-  //motor->load.init();
+
   motor->state  = EGL_BLDC_MOTOR_READY;
   motor->dir    = EGL_BLDC_MOTOR_DIR_CW;
   motor->power  = 0;

@@ -8,8 +8,17 @@
 #include "egl_lib.h"
 #include "ecd_bsp.h"
 
+#define BLDC_LOAD_MAMPS_PER_DIGIT (12)
+
+int32_t convert_to_mamps(int32_t raw)
+{
+  return raw * BLDC_LOAD_MAMPS_PER_DIGIT;
+}
+
 int main(void)
 {
+  int16_t load = 0;
+  
   ecd_bsp_init();
 
   egl_itf_open(ecd_dbg_usart());
@@ -22,22 +31,12 @@ int main(void)
   //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
   egl_bldc_set_power(ecd_bldc_motor(), 64);
   egl_bldc_start(ecd_bldc_motor());
-
+  
   while(1)
   {
-    //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CW);
-    //egl_bldc_start(ecd_bldc_motor());
-    //egl_delay(ms, 1000);
-    //egl_bldc_stop(ecd_bldc_motor());
-
-    //egl_delay(ms, 1000);
-
-    //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
-    //egl_bldc_start(ecd_bldc_motor());
-    //egl_delay(ms, 1000);
-    //egl_bldc_stop(ecd_bldc_motor());
-
-    //egl_delay(ms, 1000);
+    egl_delay(ms, 100);
+    load = egl_bldc_get_load(ecd_bldc_motor());
+    EGL_TRACE_INFO("Load: %d mA (%d)\r\n", convert_to_mamps(load), load);    
   }
 
   return 0;
