@@ -38,7 +38,6 @@ static void init(void)
   TIM_TimeBaseInitTypeDef  timer;
   TIM_OCInitTypeDef        tim_oc;
   TIM_BDTRInitTypeDef      bdtr;
-  //NVIC_InitTypeDef         nvic;
   
   /* GPIOA and GPIOB clocks enable */
   RCC_AHBPeriphClockCmd(ECD_BLDC_PWM_GPIO_RCC, ENABLE);

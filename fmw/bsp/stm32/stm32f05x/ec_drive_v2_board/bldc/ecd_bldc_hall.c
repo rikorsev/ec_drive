@@ -123,7 +123,7 @@ void EXTI0_1_IRQHandler(void)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_1_EXTI);
 
-      egl_led_toggle(ecd_led());
+      //egl_led_toggle(ecd_led());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
   
@@ -131,7 +131,7 @@ void EXTI0_1_IRQHandler(void)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_2_EXTI);
 
-      egl_led_toggle(ecd_led());
+      //egl_led_toggle(ecd_led());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
 }
@@ -142,7 +142,7 @@ void EXTI4_15_IRQHandler(void)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_3_EXTI);
 
-      egl_led_toggle(ecd_led());
+      //egl_led_toggle(ecd_led());
       egl_bldc_hall_handler(ecd_bldc_motor());
     }
 }
