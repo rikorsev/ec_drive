@@ -18,6 +18,7 @@ int32_t convert_to_mamps(int32_t raw)
 int main(void)
 {
   int16_t load = 0;
+  uint16_t speed = 0;
   
   ecd_bsp_init();
 
@@ -36,7 +37,8 @@ int main(void)
   {
     egl_delay(ms, 100);
     load = egl_bldc_get_load(ecd_bldc_motor());
-    EGL_TRACE_INFO("Load: %d mA (%d)\r\n", convert_to_mamps(load), load);    
+    speed = egl_bldc_get_speed(ecd_bldc_motor());
+    EGL_TRACE_INFO("Load: %d mA (%d), Speed: %drpm\r\n", convert_to_mamps(load), load, speed);    
   }
 
   return 0;
