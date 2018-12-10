@@ -68,3 +68,79 @@ egl_itf_status_t egl_itf_close(egl_interface_t* itf)
 
   return itf->close();
 }
+
+uint8_t egl_itf_read_byte(egl_interface_t* itf)
+{
+  uint8_t data = 0;
+  size_t  size = sizeof(uint8_t);
+  
+  assert(egl_itf_read(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint8_t));
+
+  return data;
+}
+
+uint16_t egl_itf_read_halfword(egl_interface_t* itf)
+{
+  uint16_t data = 0;
+  size_t   size = sizeof(uint16_t);
+  
+  assert(egl_itf_read(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint16_t));
+
+  return data;
+}
+
+uint32_t egl_itf_read_word(egl_interface_t* itf)
+{
+  uint32_t data = 0;
+  size_t   size = sizeof(uint32_t);
+  
+  assert(egl_itf_read(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint32_t));
+
+  return data;
+}
+
+uint64_t egl_itf_read_longword(egl_interface_t* itf)
+{
+  uint64_t data = 0;
+  size_t   size = sizeof(uint64_t);
+  
+  assert(egl_itf_read(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint64_t));
+
+  return data;
+}
+
+void egl_itf_write_byte(egl_interface_t* itf, uint8_t data)
+{
+  size_t  size = sizeof(uint8_t);
+  
+  assert(egl_itf_write(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint8_t));
+}
+
+void egl_itf_write_halfword(egl_interface_t* itf, uint16_t data)
+{
+  size_t  size = sizeof(uint16_t);
+  
+  assert(egl_itf_write(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint16_t));
+}
+
+void egl_itf_write_word(egl_interface_t* itf, uint32_t data)
+{
+  size_t  size = sizeof(uint32_t);
+  
+  assert(egl_itf_write(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint32_t));
+}
+
+void egl_itf_write_longword(egl_interface_t* itf, uint64_t data)
+{
+  size_t  size = sizeof(uint64_t);
+  
+  assert(egl_itf_write(itf, &data, &size) == EGL_ITF_SUCCESS);
+  assert(size == sizeof(uint64_t));
+}
