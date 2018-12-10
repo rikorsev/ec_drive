@@ -50,6 +50,7 @@ SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_load.c
 SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_speed.c
 SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc.c
 SRC_BSP+=$(BSP_DIR)/ecd_bsp.c
+SRC_BSP+=$(BSP_DIR)/man_ctl/ecd_man_ctl.c
 
 # Peripheral library files
 SRC_PERIPH+=$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c

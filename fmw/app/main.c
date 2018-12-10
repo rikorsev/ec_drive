@@ -19,6 +19,7 @@ int main(void)
 {
   int16_t load = 0;
   uint16_t speed = 0;
+  uint16_t pwm_raw = 0;
   
   ecd_bsp_init();
 
@@ -30,15 +31,21 @@ int main(void)
   egl_led_on(ecd_led());
   
   //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
-  egl_bldc_set_power(ecd_bldc_motor(), 64);
-  egl_bldc_start(ecd_bldc_motor());
+  //egl_bldc_set_power(ecd_bldc_motor(), 64);
+  //egl_bldc_start(ecd_bldc_motor());
   
   while(1)
   {
     egl_delay(ms, 100);
+
+    /* Get current motor load and speed */
     load = egl_bldc_get_load(ecd_bldc_motor());
     speed = egl_bldc_get_speed(ecd_bldc_motor());
-    EGL_TRACE_INFO("Load: %d mA (%d), Speed: %drpm\r\n", convert_to_mamps(load), load, speed);    
+    EGL_TRACE_INFO("Load: %d mA (%d), Speed: %drpm\r\n", convert_to_mamps(load), load, speed);
+
+    /* Get PWM task */
+    pwm_raw = egl_itf_read_halfword(ecd_man_pwm_ctl());
+    EGL_TRACE_INFO("PWM raw: %d\r\n", pwm_raw);
   }
 
   return 0;

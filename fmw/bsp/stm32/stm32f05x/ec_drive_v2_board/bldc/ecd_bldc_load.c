@@ -37,9 +37,6 @@ static void adc_init(void)
   config.ADC_ScanDirection         = ADC_ScanDirection_Upward;
   ADC_Init(ECD_BLDC_LOAD_ADC, &config);
 
-  /* Sample rate = 16MHz/(12.5 + 1.5) = 16MHz/14 = 1142857 SPS */
-  ADC_ChannelConfig(ECD_BLDC_LOAD_ADC, ADC_Channel_6 , ADC_SampleTime_1_5Cycles);
-
   /* ADC Calibration */
   ADC_GetCalibrationFactor(ECD_BLDC_LOAD_ADC);
 
@@ -68,22 +65,41 @@ static int16_t get(void)
   int16_t load = 0;
 
   egl_led_on(ecd_led());
+
+  /* Clear other selected files */
+  ECD_BLDC_LOAD_ADC->CHSELR = 0;
+
+  /* Sample rate = 16MHz/(12.5 + 1.5) = 16MHz/14 = 1142857 SPS */
+  /* Set up BLDC LOAD MEASURMENT channel */
+  ADC_ChannelConfig(ECD_BLDC_LOAD_ADC, ADC_Channel_6, ADC_SampleTime_1_5Cycles);
   
   for(int i = 0; i < ECD_BLDC_LOAD_NUM_OF_AVAREGIN; i++)
     {
       ADC_StartOfConversion(ECD_BLDC_LOAD_ADC);
 
-      while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) != SET)
+      while(ADC_GetFlagStatus(ECD_BLDC_LOAD_ADC, ADC_FLAG_EOC) != SET)
 	{
 	  /* wait fot the end of convertion */
 	}
       
-      load += ECD_BLDC_LOAD_OFFSET - ADC_GetConversionValue(ADC1);
+      load += ECD_BLDC_LOAD_OFFSET - ADC_GetConversionValue(ECD_BLDC_LOAD_ADC);
     }
 
+  /* Not necessary to stop conversion as Single-shot mode is used */
+  
   egl_led_off(ecd_led());
   
   return load / ECD_BLDC_LOAD_NUM_OF_AVAREGIN;
+}
+
+static void start(void)
+{
+  /* TBD */
+}
+
+static void stop(void)
+{
+  /* TBD */
 }
 
 static void deinit(void)
@@ -94,6 +110,8 @@ static void deinit(void)
 egl_bldc_load_t ecd_bldc_load_impl =
   {
     .init   = init,
+    .start  = start,
+    .stop   = stop,
     .update = update,
     .get    = get,
     .deinit = deinit

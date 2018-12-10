@@ -60,6 +60,8 @@ typedef struct
 typedef struct
 {
   void      (*init)   (void);
+  void      (*start)  (void);
+  void      (*stop)   (void);
   void      (*update) (void);
   int16_t   (*get)    (void);
   void      (*deinit) (void);
