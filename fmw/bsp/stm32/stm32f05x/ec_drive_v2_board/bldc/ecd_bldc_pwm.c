@@ -367,110 +367,47 @@ static inline void swich_ccw_stage_6(void)
   TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
 }
 
-static inline bool switch_wind_cw(egl_bldc_hall_state_t hall)
+static const void (* bldc_switc[2][6])(void) =
 {
-  bool result = true;
-  
-  switch(hall)
-    {
-    case EGL_BLDC_HALL_STATE_1:
-      swich_cw_stage_1();
-      break;
-  
-    case EGL_BLDC_HALL_STATE_2:
-      swich_cw_stage_2();
-      break;
-
-    case EGL_BLDC_HALL_STATE_3:
-      swich_cw_stage_3();
-      break;
-
-    case EGL_BLDC_HALL_STATE_4:
-      swich_cw_stage_4();
-      break;
-       
-    case EGL_BLDC_HALL_STATE_5:
-      swich_cw_stage_5();
-      break;
-
-    case EGL_BLDC_HALL_STATE_6:
-      swich_cw_stage_6();
-      break;
-
-    default:
-      EGL_TRACE_ERROR("Unknow hall state 0x%x\r\n", hall);
-      result = false;
-    }
-
-  return result;
-}
-
-static inline bool switch_wind_ccw(egl_bldc_hall_state_t hall)
-{
-  bool result = true;
-  
-  switch(hall)
-    {
-    case EGL_BLDC_HALL_STATE_1:
-      swich_ccw_stage_1();
-      break;
-  
-    case EGL_BLDC_HALL_STATE_2:
-      swich_ccw_stage_2();
-      break;
-
-    case EGL_BLDC_HALL_STATE_3:
-      swich_ccw_stage_3();
-      break;
-
-    case EGL_BLDC_HALL_STATE_4:
-      swich_ccw_stage_4();
-      break;
-       
-    case EGL_BLDC_HALL_STATE_5:
-      swich_ccw_stage_5();
-      break;
-
-    case EGL_BLDC_HALL_STATE_6:
-      swich_ccw_stage_6();
-      break;
-
-    default:
-      EGL_TRACE_ERROR("Unknow hall state 0x%x\r\n", hall);
-      result = false;
-    }
-
-  return result;
-}
+  {
+    swich_cw_stage_1,
+    swich_cw_stage_2,
+    swich_cw_stage_3,
+    swich_cw_stage_4,
+    swich_cw_stage_5,
+    swich_cw_stage_6
+  },
+  {
+    swich_ccw_stage_1,
+    swich_ccw_stage_2,
+    swich_ccw_stage_3,
+    swich_ccw_stage_4,
+    swich_ccw_stage_5,
+    swich_ccw_stage_6
+  }
+};
 
 static bool switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
 {
-  bool result = true;
-  
-  switch(dir)
+  if(hall > EGL_BLDC_HALL_STATE_6)
     {
-    case EGL_BLDC_MOTOR_DIR_CW:
-      result = switch_wind_cw(hall);
-      break;
+      EGL_TRACE_ERROR("Unknow hall state 0x%x\r\n", hall);
+      return false;
+    }
 
-    case EGL_BLDC_MOTOR_DIR_CCW:
-      result = switch_wind_ccw(hall);
-      break;
-
-    default:
+  if(dir > EGL_BLDC_MOTOR_DIR_CCW)
+    {
       EGL_TRACE_ERROR("Unknow direction 0x%x\r\n", dir);
-      result = false;
+      return false;
     }
-  
-  if(result != false)
-    {
-      TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_Break);
-      TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_COM);
-    }
-  
-  return result;
-}
 
+  bldc_switc[dir][hall]();
+
+  TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_Break);
+  TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_COM);
+  
+  return true;
+}
 
 static void deinit(void)
 {
