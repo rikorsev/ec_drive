@@ -9,18 +9,35 @@
 #include "ecd_bsp.h"
 
 #define BLDC_LOAD_MAMPS_PER_DIGIT (12)
+#define NUM_OF_APROXIMATIONS      (100)
 
-int32_t convert_to_mamps(int32_t raw)
+static int32_t convert_to_mamps(int32_t raw)
 {
   return raw * BLDC_LOAD_MAMPS_PER_DIGIT;
 }
 
+static void calc_aprox_motor_params(uint16_t pwm)
+{
+  int32_t load = 0;
+  uint32_t speed = 0;
+  
+  for(int i = 0; i < NUM_OF_APROXIMATIONS; i++)
+    {
+      egl_delay(ms, 100);
+
+      /* Get current motor load and speed */
+      load += egl_bldc_get_load(ecd_bldc_motor());
+      speed += egl_bldc_get_speed(ecd_bldc_motor());
+    }
+  
+  load /= NUM_OF_APROXIMATIONS;
+  speed /= NUM_OF_APROXIMATIONS;
+  
+  EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
+}
+
 int main(void)
 {
-  int16_t load = 0;
-  uint16_t speed = 0;
-  uint16_t pwm_raw = 0;
-  
   ecd_bsp_init();
 
   egl_itf_open(ecd_dbg_usart());
@@ -30,22 +47,19 @@ int main(void)
 
   egl_led_on(ecd_led());
   
-  //egl_bldc_set_dir(ecd_bldc_motor(), EGL_BLDC_MOTOR_DIR_CCW);
-  //egl_bldc_set_power(ecd_bldc_motor(), 64);
-  //egl_bldc_start(ecd_bldc_motor());
-  
+  egl_bldc_start(ecd_bldc_motor());
+
+  for(uint16_t pwm = 0; pwm < 320; pwm += 15)
+    {
+      egl_bldc_set_power(ecd_bldc_motor(), pwm);
+      calc_aprox_motor_params(pwm);
+    }
+
+  egl_bldc_stop(ecd_bldc_motor());
+    
   while(1)
   {
-    egl_delay(ms, 100);
-
-    /* Get current motor load and speed */
-    load = egl_bldc_get_load(ecd_bldc_motor());
-    speed = egl_bldc_get_speed(ecd_bldc_motor());
-    EGL_TRACE_INFO("Load: %d mA (%d), Speed: %drpm\r\n", convert_to_mamps(load), load, speed);
-
-    /* Get PWM task */
-    pwm_raw = egl_itf_read_halfword(ecd_man_pwm_ctl());
-    EGL_TRACE_INFO("PWM raw: %d\r\n", pwm_raw);
+    /* Do nothing */
   }
 
   return 0;
