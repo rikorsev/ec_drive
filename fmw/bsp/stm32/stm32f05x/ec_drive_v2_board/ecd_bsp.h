@@ -9,6 +9,7 @@
 #include "bldc/ecd_bldc_hall.h"
 #include "bldc/ecd_bldc.h"
 #include "man_ctl/ecd_man_ctl.h"
+#include "spi/ecd_spi.h"
 
 void ecd_bsp_init(void);
 

@@ -51,6 +51,7 @@ SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_speed.c
 SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc.c
 SRC_BSP+=$(BSP_DIR)/ecd_bsp.c
 SRC_BSP+=$(BSP_DIR)/man_ctl/ecd_man_ctl.c
+SRC_BSP+=$(BSP_DIR)/spi/ecd_spi.c
 
 # Peripheral library files
 SRC_PERIPH+=$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c
@@ -160,8 +161,16 @@ $(HEX): $(TARGET)
 upload: $(HEX)
 	$(STFLASH) --format ihex write $(HEX)
 
+upload_pi: $(HEX)
+	scp $(HEX) pi:~
+	ssh pi $(STFLASH) --format ihex write $(TARGET_HEX)
+
 erase:
 	$(STFLASH) erase
+
+#debug_pi
+#sudo openocd -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg -c "bindto 0.0.0.0"
+#gdb-multiarch -ex "target remote 192.168.0.162:3333" -ex "b main" -ex "monitor reset halt" -ex "c" bin/ec_drive.elf
 
 debug: $(TARGET)
 	setsid xterm -e 'bash -c "$(OPENOCD) -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg"' >/dev/null 2>&1 < /dev/null &

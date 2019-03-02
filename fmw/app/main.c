@@ -38,6 +38,9 @@ static void calc_aprox_motor_params(uint16_t pwm)
 
 int main(void)
 {
+  uint8_t spi_buff[16] = {0};
+  size_t len = 0;
+  
   ecd_bsp_init();
 
   egl_itf_open(ecd_dbg_usart());
@@ -45,21 +48,22 @@ int main(void)
 
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
-  egl_led_on(ecd_led());
+  egl_itf_open(ecd_spi());
   
-  egl_bldc_start(ecd_bldc_motor());
-
-  for(uint16_t pwm = 0; pwm < 320; pwm += 15)
-    {
-      egl_bldc_set_power(ecd_bldc_motor(), pwm);
-      calc_aprox_motor_params(pwm);
-    }
-
-  egl_bldc_stop(ecd_bldc_motor());
-    
+  egl_led_on(ecd_led());
+ 
   while(1)
   {
-    /* Do nothing */
+    len = sizeof(spi_buff);
+    egl_itf_read(ecd_spi(), spi_buff, &len);
+    
+    EGL_TRACE_INFO("SPI readen %d\r\n", len);
+    for(int i = 0; i < len; i++)
+      {
+	EGL_TRACE_INFO("SPI[%d] = 0x%x\r\n", i, spi_buff[i]);
+      }
+
+    egl_delay(ms, 1000);
   }
 
   return 0;
