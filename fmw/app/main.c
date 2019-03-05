@@ -10,6 +10,9 @@
 
 #define BLDC_LOAD_MAMPS_PER_DIGIT (12)
 #define NUM_OF_APROXIMATIONS      (100)
+#define CRC_EXPECTED              (0xD71C)
+
+static const uint8_t test_data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 
 static int32_t convert_to_mamps(int32_t raw)
 {
@@ -38,32 +41,29 @@ static void calc_aprox_motor_params(uint16_t pwm)
 
 int main(void)
 {
-  uint8_t spi_buff[16] = {0};
-  size_t len = 0;
-  
+  uint16_t crc = 0;
   ecd_bsp_init();
 
   egl_itf_open(ecd_dbg_usart());
   egl_trace_init(EGL_TRACE_LEVEL_DEBUG, ms, NULL, 0);
-
+  
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
+  egl_crc_init(egl_crc16_ccitt(), 0, 0xFFFF);
   egl_itf_open(ecd_spi());
-  
   egl_led_on(ecd_led());
- 
+
+  //  crc = egl_crc16_calc(ecd_crc(), test_data, sizeof(test_data));
+
+  //EGL_TRACE_INFO("CRC calc: 0x%04x, exp: 0x%04x\r\n", crc, CRC_EXPECTED);
+
+  crc = egl_crc16_calc(egl_crc16_ccitt(), test_data, sizeof(test_data));
+
+  EGL_TRACE_INFO("CRC calc: 0x%04x, exp: 0x%04x\r\n", crc, CRC_EXPECTED);
+  
   while(1)
   {
-    len = sizeof(spi_buff);
-    egl_itf_read(ecd_spi(), spi_buff, &len);
     
-    EGL_TRACE_INFO("SPI readen %d\r\n", len);
-    for(int i = 0; i < len; i++)
-      {
-	EGL_TRACE_INFO("SPI[%d] = 0x%x\r\n", i, spi_buff[i]);
-      }
-
-    egl_delay(ms, 1000);
   }
 
   return 0;

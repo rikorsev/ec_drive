@@ -5,8 +5,9 @@ SIZE=arm-none-eabi-size
 OBJCOPY=arm-none-eabi-objcopy
 STFLASH=st-flash
 OPENOCD=openocd
-#GDB=arm-none-eabi-gdb
 GDB=gdb-multiarch
+#OPENOCD_START_CMD = 
+
 
 # Pathes
 OBJ_DIR=./obj
@@ -32,6 +33,7 @@ INCLUDE+=-I$(LIB_DIR)/func/interface
 INCLUDE+=-I$(LIB_DIR)/func/delay
 INCLUDE+=-I$(LIB_DIR)/func/trace
 INCLUDE+=-I$(LIB_DIR)/func/bldc
+INCLUDE+=-I$(LIB_DIR)/func/crc
 
 # Source files
 # Application source files
@@ -52,6 +54,7 @@ SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc.c
 SRC_BSP+=$(BSP_DIR)/ecd_bsp.c
 SRC_BSP+=$(BSP_DIR)/man_ctl/ecd_man_ctl.c
 SRC_BSP+=$(BSP_DIR)/spi/ecd_spi.c
+SRC_BSP+=$(BSP_DIR)/crc/ecd_crc.c
 
 # Peripheral library files
 SRC_PERIPH+=$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c
@@ -87,6 +90,8 @@ SRC_LIB+=$(LIB_DIR)/func/interface/egl_interface.c
 SRC_LIB+=$(LIB_DIR)/func/delay/egl_delay.c
 SRC_LIB+=$(LIB_DIR)/func/trace/egl_trace.c
 SRC_LIB+=$(LIB_DIR)/func/bldc/egl_bldc_motor.c
+SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc.c
+SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_ccitt.c
 
 SRC+=$(SRC_PERIPH)
 SRC+=$(SRC_APP)
@@ -168,13 +173,15 @@ upload_pi: $(HEX)
 erase:
 	$(STFLASH) erase
 
-#debug_pi
-#sudo openocd -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg -c "bindto 0.0.0.0"
-#gdb-multiarch -ex "target remote 192.168.0.162:3333" -ex "b main" -ex "monitor reset halt" -ex "c" bin/ec_drive.elf
-
 debug: $(TARGET)
 	setsid xterm -e 'bash -c "$(OPENOCD) -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg"' >/dev/null 2>&1 < /dev/null &
 	$(GDB) -ex "target remote localhost:3333" -ex "b main" -ex "monitor reset halt" -ex "c" $(TARGET)
+	pkill xterm
+
+debug_pi: $(TARGET)
+	setsid xterm -e 'bash -c "ssh pi $(OPENOCD) -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg -f ecd_openocd.cfg"' >/dev/null 2>&1 < /dev/null &
+	$(GDB) -ex "target remote 192.168.0.162:3333" -ex "b main" -ex "monitor reset halt" -ex "c" $(TARGET)
+	ssh pi pkill $(OPENOCD)
 	pkill xterm
 
 rebuild: clean $(TARGET)

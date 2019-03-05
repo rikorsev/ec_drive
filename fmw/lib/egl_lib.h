@@ -8,5 +8,7 @@
 #include "func/interface/egl_interface.h"
 #include "func/delay/egl_delay.h"
 #include "func/bldc/egl_bldc_motor.h"
+#include "func/crc/egl_crc.h"
+#include "func/crc/egl_crc16_ccitt.h"
 
 #endif // EGL_LIB_H
