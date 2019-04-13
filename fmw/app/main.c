@@ -7,12 +7,11 @@
 #include "stm32f0xx.h"
 #include "egl_lib.h"
 #include "ecd_bsp.h"
+#include "cmd_handler.h"
 
 #define BLDC_LOAD_MAMPS_PER_DIGIT (12)
 #define NUM_OF_APROXIMATIONS      (100)
 #define CRC_EXPECTED              (0xD71C)
-
-static const uint8_t test_data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 
 static int32_t convert_to_mamps(int32_t raw)
 {
@@ -39,9 +38,44 @@ static void calc_aprox_motor_params(uint16_t pwm)
   EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
 }
 
+static void spi(void)
+{
+  egl_result_t result      = EGL_SUCCESS;
+  static uint8_t buff[128] = {0};
+  size_t read_len          = sizeof(buff);
+ 
+  result = egl_itf_read(ecd_spi(), buff, &read_len);
+  if(result != EGL_SUCCESS)
+    {
+      EGL_TRACE_ERROR("SPI: read fail. Result: %s\r\n", egl_result_str_get(result));
+      return;
+    }
+
+  if(read_len > 0)
+    {
+      EGL_TRACE_INFO("SPI: got %d\r\n", read_len);
+
+      for(uint8_t i = 0; i < read_len; i++)
+	    {
+	      EGL_TRACE_INFO("0x%02x\r\n", buff[i]);
+	    }
+      
+      result = egl_ptc_decode(spi_llp(), buff, &read_len);
+      EGL_TRACE_INFO("SPI: %s\r\n", egl_result_str_get(result));
+    }
+
+  // result = egl_itf_write(ecd_spi(), buff, &write_len);
+  // if(result != EGL_SUCCESS)
+  //   {
+  //      EGL_TRACE_ERROR("SPI: write fail. Result %s\r\n", egl_result_str_get(result));
+  //   }
+}  
+
 int main(void)
 {
+  uint8_t test_data[] = {0x01, 0xC0, 0x00, 0x00};
   uint16_t crc = 0;
+
   ecd_bsp_init();
 
   egl_itf_open(ecd_dbg_usart());
@@ -49,21 +83,17 @@ int main(void)
   
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
-  egl_crc_init(egl_crc16_ccitt(), 0, 0xFFFF);
+  egl_crc_init(egl_crc16_xmodem(), 0, 0);
   egl_itf_open(ecd_spi());
   egl_led_on(ecd_led());
 
-  //  crc = egl_crc16_calc(ecd_crc(), test_data, sizeof(test_data));
+  crc = egl_crc16_calc(egl_crc16_xmodem(), test_data, sizeof(test_data));
 
-  //EGL_TRACE_INFO("CRC calc: 0x%04x, exp: 0x%04x\r\n", crc, CRC_EXPECTED);
-
-  crc = egl_crc16_calc(egl_crc16_ccitt(), test_data, sizeof(test_data));
-
-  EGL_TRACE_INFO("CRC calc: 0x%04x, exp: 0x%04x\r\n", crc, CRC_EXPECTED);
+  EGL_TRACE_INFO("Test CRC16: 0x%04x\r\n", crc);
   
   while(1)
   {
-    
+    spi();
   }
 
   return 0;

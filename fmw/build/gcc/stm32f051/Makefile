@@ -6,8 +6,6 @@ OBJCOPY=arm-none-eabi-objcopy
 STFLASH=st-flash
 OPENOCD=openocd
 GDB=gdb-multiarch
-#OPENOCD_START_CMD = 
-
 
 # Pathes
 OBJ_DIR=./obj
@@ -20,6 +18,7 @@ PERIPH_CMSIS_DIR=$(PERIPH_DIR)/Libraries/CMSIS
 BSP_DIR=$(PROJ_ROOT)/bsp/stm32/stm32f05x/ec_drive_v2_board
 
 # Include pathes
+INCLUDE+=-I$(PROJ_ROOT)/app
 INCLUDE+=-I$(PERIPH_DIR)/Libraries/STM32F0xx_StdPeriph_Driver/inc
 INCLUDE+=-I$(PERIPH_CMSIS_DIR)/Include
 INCLUDE+=-I$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Include
@@ -27,6 +26,7 @@ INCLUDE+=-I$(PROJ_ROOT)/bsp/stm32/stm32f05x/ec_drive_v2_board
 INCLUDE+=-I$(BSP_DIR)
 INCLUDE+=-I$(LIB_DIR)
 INCLUDE+=-I$(LIB_DIR)/abst/ringbuffer
+INCLUDE+=-I$(LIB_DIR)/abst/result
 INCLUDE+=-I$(LIB_DIR)/func/count
 INCLUDE+=-I$(LIB_DIR)/func/led
 INCLUDE+=-I$(LIB_DIR)/func/interface
@@ -34,10 +34,13 @@ INCLUDE+=-I$(LIB_DIR)/func/delay
 INCLUDE+=-I$(LIB_DIR)/func/trace
 INCLUDE+=-I$(LIB_DIR)/func/bldc
 INCLUDE+=-I$(LIB_DIR)/func/crc
+INCLUDE+=-I$(LIB_DIR)/protocol
+INCLUDE+=-I$(LIB_DIR)/protocol/llp
 
 # Source files
 # Application source files
 SRC_APP+=$(PROJ_ROOT)/app/main.c
+SRC_APP+=$(PROJ_ROOT)/app/cmd_handler.c
 
 # BSP files
 SRC_BSP+=$(BSP_DIR)/stm32f0xx_it.c
@@ -84,6 +87,7 @@ SRC_PERIPH+=$(PERIPH_SRC_DIR)/stm32f0xx_tim.c
 
 # Embedded General Libary source
 SRC_LIB+=$(LIB_DIR)/abst/ringbuffer/ringbuffer.c
+SRC_LIB+=$(LIB_DIR)/abst/result/egl_result.c
 SRC_LIB+=$(LIB_DIR)/func/led/egl_led.c
 SRC_LIB+=$(LIB_DIR)/func/count/egl_counter.c
 SRC_LIB+=$(LIB_DIR)/func/interface/egl_interface.c
@@ -92,6 +96,9 @@ SRC_LIB+=$(LIB_DIR)/func/trace/egl_trace.c
 SRC_LIB+=$(LIB_DIR)/func/bldc/egl_bldc_motor.c
 SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc.c
 SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_ccitt.c
+SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_xmodem.c
+SRC_LIB+=$(LIB_DIR)/protocol/egl_protocol.c
+SRC_LIB+=$(LIB_DIR)/protocol/llp/egl_llp.c
 
 SRC+=$(SRC_PERIPH)
 SRC+=$(SRC_APP)

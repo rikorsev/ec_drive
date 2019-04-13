@@ -29,11 +29,11 @@ static void init(void)
   acd_init();
 }
 
-static egl_itf_status_t open(void)
+static egl_result_t open(void)
 {
   /* Do nothing */
 
-  return EGL_ITF_SUCCESS;
+  return EGL_SUCCESS;
 }
 
 static size_t read(void* data, size_t len)
@@ -58,11 +58,11 @@ static size_t read(void* data, size_t len)
   return sizeof(uint16_t);
 }
 
-static egl_itf_status_t close(void)
+static egl_result_t close(void)
 {
   /* Do nothing */
 
-  return EGL_ITF_SUCCESS;
+  return EGL_SUCCESS;
 }
 
 static void deinit(void)

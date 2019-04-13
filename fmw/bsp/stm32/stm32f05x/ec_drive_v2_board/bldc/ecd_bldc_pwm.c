@@ -106,7 +106,7 @@ static void init(void)
   TIM_CCPreloadControl(ECD_BLDC_PWM_TIMER, ENABLE);
 } 
 
-static bool start(void)
+static egl_result_t bool start(void)
 {
   /* TIM1 counter enable */
   TIM_Cmd(ECD_BLDC_PWM_TIMER, ENABLE);
@@ -114,10 +114,10 @@ static bool start(void)
   /* Main Output Enable */
   TIM_CtrlPWMOutputs(ECD_BLDC_PWM_TIMER, ENABLE);
   
-  return true;
+  return EGL_SUCCESS;
 }
 
-static bool stop(void)
+static egl_result_t stop(void)
 {
   /* TIM1 counter disable */
   TIM_Cmd(ECD_BLDC_PWM_TIMER, DISABLE);
@@ -125,19 +125,21 @@ static bool stop(void)
   /* Main Output disable */
   TIM_CtrlPWMOutputs(ECD_BLDC_PWM_TIMER, DISABLE);
  
-  return true;
+  return EGL_SUCCESS;
 }
 
-static void set(uint16_t power)
+static egl_result_t set(uint16_t power)
 {
   if( ECD_BLDC_PWM_PERIOD < power)
     {
-      power = ECD_BLDC_PWM_PERIOD;
+      return EGL_OUT_OF_BOUNDARY;
     }
   
   TIM_SetCompare1(ECD_BLDC_PWM_TIMER, power);
   TIM_SetCompare2(ECD_BLDC_PWM_TIMER, power);
   TIM_SetCompare3(ECD_BLDC_PWM_TIMER, power);
+
+  return EGL_SUCCESS;
 }
 
 /* PWM C2P, High C1N */
@@ -387,18 +389,18 @@ static const void (* bldc_switc[2][6])(void) =
   }
 };
 
-static bool switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
+static egl_result_t switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
 {
   if(hall > EGL_BLDC_HALL_STATE_6)
     {
       EGL_TRACE_ERROR("Unknow hall state 0x%x\r\n", hall);
-      return false;
+      return EGL_INVALID_PARAM;
     }
 
   if(dir > EGL_BLDC_MOTOR_DIR_CCW)
     {
       EGL_TRACE_ERROR("Unknow direction 0x%x\r\n", dir);
-      return false;
+      return EGL_INVALID_PARAM;
     }
 
   bldc_switc[dir][hall]();
@@ -406,12 +408,12 @@ static bool switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
   TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_Break);
   TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_COM);
   
-  return true;
+  return EGL_SUCCESS;
 }
 
 static void deinit(void)
 {
-  
+  /* TBD */
 }
 
 egl_bldc_pwm_t ecd_bldc_pwm_impl =

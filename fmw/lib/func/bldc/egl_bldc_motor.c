@@ -48,12 +48,13 @@ void egl_bldc_init(egl_bldc_t *motor)
   motor->power  = 0;
 }
 
-/* TBD: return motor status instead bool */
-bool egl_bldc_start(egl_bldc_t *motor)
+egl_result_t egl_bldc_start(egl_bldc_t *motor)
 {
-  bool result = false;
+  egl_result_t result = EGL_FAIL;
 
-  /* TBD: add asserts */
+  assert(motor             != NULL);
+  assert(motor->pwm        != NULL);
+  assert(motor->pwm->start != NULL);
   
   if(motor->state != EGL_BLDC_MOTOR_IN_WORK)
     {
@@ -62,67 +63,87 @@ bool egl_bldc_start(egl_bldc_t *motor)
 	  motor->state = EGL_BLDC_MOTOR_IN_WORK;
 	  egl_bldc_hall_handler(motor);
 	  motor->speed->start();
-	  result = true;
+	  result = EGL_SUCCESS;
 	}
     }
   
   return result;
 }
 
-/* TBD: return motor status instead bool */
-bool egl_bldc_stop(egl_bldc_t *motor)
+egl_result_t egl_bldc_stop(egl_bldc_t *motor)
 {
-  bool result = false;
-
-  /* TBD: add asserts */
+  egl_result_t result = EGL_FAIL;
+  
+  assert(motor             != NULL);
+  assert(motor->pwm        != NULL);
+  assert(motor->pwm->stop  != NULL);
   
   if(motor->pwm->stop() == true)
     {
       motor->speed->stop();
       motor->state = EGL_BLDC_MOTOR_READY;
-      result = true;
+      result = EGL_SUCCESS;
     }
   
   return result;
 }
 
-/*TBD: return motor status */
-void egl_bldc_hall_handler(egl_bldc_t *motor)
+egl_result_t egl_bldc_hall_handler(egl_bldc_t *motor)
 {
+  egl_result_t result = EGL_SUCCESS;
+  
   if(motor->state == EGL_BLDC_MOTOR_IN_WORK)
   {
     motor->speed->update();
-    if(false == motor->pwm->switch_wind(motor->hall->get(), motor->dir))
+    if(EGL_SUCCESS != motor->pwm->switch_wind(motor->hall->get(), motor->dir))
       {
 	egl_bldc_stop(motor);
 	motor->state = EGL_BLDC_MOTOR_ERROR;
       }
-   }  
+   }
+
+  return result;
 }
 
 
 void egl_bldc_set_dir(egl_bldc_t *motor, egl_bldc_dir_t dir)
 {
+  assert(motor != NULL);
+  
   motor->dir = dir;
 }
 
 egl_bldc_dir_t bldc_get_dir(egl_bldc_t *motor)
 {
+  assert(motor != NULL);
+  
   return motor->dir;
 }
 
-void egl_bldc_set_power(egl_bldc_t *motor, uint16_t power)
+egl_result_t egl_bldc_set_power(egl_bldc_t *motor, uint16_t power)
 {
-  motor->pwm->set(power);
+  assert(motor             != NULL);
+  assert(motor->pwm        != NULL);
+  assert(motor->pwm->set   != NULL);
+  
+  return motor->pwm->set(power);
 }
 
 uint32_t egl_bldc_get_speed(egl_bldc_t *motor)
 {
+  assert(motor             != NULL);
+  assert(motor->speed      != NULL);
+  assert(motor->speed->get != NULL);
+  
   return motor->speed->get();
 }
 
 int16_t egl_bldc_get_load(egl_bldc_t *motor)
 {
+  assert(motor            != NULL);
+  assert(motor->load      != NULL);
+  assert(motor->load->get != NULL);
+  
   return motor->load->get();
 }
 

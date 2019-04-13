@@ -72,12 +72,12 @@ static void init(void)
   NVIC_Init(&nvic);
 }
 
-static egl_itf_status_t open(void)
+static egl_result_t open(void)
 {
   /* Enable USART */
   USART_Cmd(ECD_DBG_USART, ENABLE);
 
-  return EGL_ITF_SUCCESS;
+  return EGL_SUCCESS;
 }
 
 static size_t write_polling(void* buff, size_t len)
@@ -125,7 +125,7 @@ static size_t write_interrupt(void* buff, size_t len)
   return len;
 }
 
-static egl_itf_status_t ioctl(uint8_t opcode, void* data, size_t len)
+static egl_result_t ioctl(uint8_t opcode, void* data, size_t len)
 {
   switch(opcode)
     {
@@ -140,15 +140,15 @@ static egl_itf_status_t ioctl(uint8_t opcode, void* data, size_t len)
       
     }
 
-  return EGL_ITF_SUCCESS;
+  return EGL_SUCCESS;
 }
 
-static egl_itf_status_t close(void)
+static egl_result_t close(void)
 {
   /* Disable USART */
   USART_Cmd(ECD_DBG_USART, DISABLE);
 
-  return EGL_ITF_SUCCESS;
+  return EGL_SUCCESS;
 }
 
 static void deinit(void)
@@ -206,14 +206,11 @@ egl_interface_t *ecd_dbg_usart(void)
 
 int _write(int file, char *ptr, int len)
 {
-  egl_itf_status_t result = EGL_ITF_SUCCESS;
-
   switch (file)
     {
     case 1: /* stdout */
     case 2: /* stderr */
-      result = egl_itf_write(ecd_dbg_usart(), ptr, (size_t *)&len);
-      assert(result == EGL_ITF_SUCCESS);
+      assert(egl_itf_write(ecd_dbg_usart(), ptr, (size_t *)&len) == EGL_SUCCESS);
       break;
     default:
       return -1;

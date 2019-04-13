@@ -99,11 +99,11 @@ static void init(void)
   nvic_init();
 }
 
-static egl_itf_status_t open(void)
+static egl_result_t open(void)
 {
   SPI_Cmd(ECD_SPI, ENABLE);
 
-  return EGL_ITF_SUCCESS;
+  return EGL_SUCCESS;
 }
 
 static size_t write(void* data, size_t len)
@@ -116,11 +116,11 @@ static size_t read(void* data, size_t len)
   return ring_buffer_read(&ecd_spi_rx_rb, data, len);
 }
 
-static egl_itf_status_t close(void)
+static egl_result_t close(void)
 {
   SPI_Cmd(ECD_SPI, DISABLE);
 
-  return EGL_ITF_SUCCESS;
+  return EGL_SUCCESS;
 }
 
 void SPI1_IRQHandler(void)
