@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "stm32f0xx.h"
 #include "egl_lib.h"
@@ -40,35 +41,45 @@ static void calc_aprox_motor_params(uint16_t pwm)
 
 static void spi(void)
 {
-  egl_result_t result      = EGL_SUCCESS;
-  static uint8_t buff[128] = {0};
-  size_t read_len          = sizeof(buff);
- 
-  result = egl_itf_read(ecd_spi(), buff, &read_len);
+  egl_result_t result         = EGL_SUCCESS;
+  static uint8_t buff_in[64]  = {0};
+  static uint8_t buff_out[64] = {0};
+  size_t read_len             = sizeof(buff_in);
+  size_t write_len            = sizeof(buff_out);
+
+  result = egl_itf_read(ecd_spi(), buff_in, &read_len);
   if(result != EGL_SUCCESS)
     {
-      EGL_TRACE_ERROR("SPI: read fail. Result: %s\r\n", egl_result_str_get(result));
+      EGL_TRACE_ERROR("SPI: read fail. Result: %s\r\n", EGL_RESULT());
       return;
     }
 
   if(read_len > 0)
     {
       EGL_TRACE_INFO("SPI: got %d\r\n", read_len);
+      for(int i = 0; i < read_len; i++)
+      {
+        EGL_TRACE_INFO("0x%02x\r\n", buff_in[i]);
+      }
 
-      for(uint8_t i = 0; i < read_len; i++)
-	    {
-	      EGL_TRACE_INFO("0x%02x\r\n", buff[i]);
-	    }
+      result = egl_ptc_decode(spi_llp(), buff_in, &read_len, buff_out, &write_len);
+      if(result != EGL_SUCCESS && result != EGL_PROCESS)
+      {
+        EGL_TRACE_INFO("SPI: decode fail. Result: %s\r\n", EGL_RESULT());
+        return;
+      }
+
+      EGL_TRACE_INFO("SPI: send %d\r\n", write_len);
       
-      result = egl_ptc_decode(spi_llp(), buff, &read_len);
-      EGL_TRACE_INFO("SPI: %s\r\n", egl_result_str_get(result));
-    }
+      result = egl_itf_write(ecd_spi(), buff_out, &write_len);
+      if(result != EGL_SUCCESS)
+      {
+        EGL_TRACE_ERROR("SPI: write fail. Result %s\r\n", EGL_RESULT());
+        return;
+      }
 
-  // result = egl_itf_write(ecd_spi(), buff, &write_len);
-  // if(result != EGL_SUCCESS)
-  //   {
-  //      EGL_TRACE_ERROR("SPI: write fail. Result %s\r\n", egl_result_str_get(result));
-  //   }
+      EGL_TRACE_INFO("SPI: sent %d\r\n", write_len);
+    }
 }  
 
 int main(void)
@@ -86,6 +97,7 @@ int main(void)
   egl_crc_init(egl_crc16_xmodem(), 0, 0);
   egl_itf_open(ecd_spi());
   egl_led_on(ecd_led());
+  egl_pio_set(ecd_int2_pin(), true);  
 
   crc = egl_crc16_calc(egl_crc16_xmodem(), test_data, sizeof(test_data));
 

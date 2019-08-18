@@ -11,6 +11,8 @@
 #include "man_ctl/ecd_man_ctl.h"
 #include "spi/ecd_spi.h"
 #include "crc/ecd_crc.h"
+#include "int_pin/ecd_int_pin.h"
+#include "int2_pin/ecd_int2_pin.h"
 
 void ecd_bsp_init(void);
 

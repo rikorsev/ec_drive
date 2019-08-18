@@ -12,6 +12,7 @@
 #include "func/crc/egl_crc.h"
 #include "func/crc/egl_crc16_ccitt.h"
 #include "func/crc/egl_crc16_xmodem.h"
+#include "func/pio/egl_pio.h"
 #include "protocol/egl_protocol.h"
 #include "protocol/llp/egl_llp.h"
 

@@ -39,7 +39,7 @@ static void init(void)
   RCC_APB1PeriphClockCmd(ECD_DBG_USART_RCC, ENABLE); 
 
   /* Connect PXx to USARTx_Rx */
-  GPIO_PinAFConfig(ECD_DBG_USART_PORT, ECD_DBG_USART_RX_PIN_SRC, GPIO_AF_1);
+  //GPIO_PinAFConfig(ECD_DBG_USART_PORT, ECD_DBG_USART_RX_PIN_SRC, GPIO_AF_1);
 
   /* Connect PXx to USARTx_Tx */
   GPIO_PinAFConfig(ECD_DBG_USART_PORT, ECD_DBG_USART_TX_PIN_SRC, GPIO_AF_1);
@@ -52,8 +52,8 @@ static void init(void)
   gpio.GPIO_PuPd                   = GPIO_PuPd_UP;
   GPIO_Init(ECD_DBG_USART_PORT, &gpio);
 
-  gpio.GPIO_Pin                    = ECD_DBG_USART_RX_PIN;
-  GPIO_Init(ECD_DBG_USART_PORT, &gpio);
+  //gpio.GPIO_Pin                    = ECD_DBG_USART_RX_PIN;
+  //GPIO_Init(ECD_DBG_USART_PORT, &gpio);
   
   usart.USART_BaudRate             = ECD_DBG_USART_DEFAULT_SPEED;
   usart.USART_WordLength           = USART_WordLength_8b;
@@ -206,12 +206,21 @@ egl_interface_t *ecd_dbg_usart(void)
 
 int _write(int file, char *ptr, int len)
 {
+  size_t to_write = len;
+  size_t offset = 0;
+
   switch (file)
     {
     case 1: /* stdout */
     case 2: /* stderr */
-      assert(egl_itf_write(ecd_dbg_usart(), ptr, (size_t *)&len) == EGL_SUCCESS);
-      break;
+      while(offset < len)
+      {
+        to_write = len - offset;
+        assert(egl_itf_write(ecd_dbg_usart(), ptr + offset, (size_t *)&to_write) == EGL_SUCCESS);
+        offset += to_write;
+      }
+    break;
+    
     default:
       return -1;
     }

@@ -27,12 +27,15 @@ egl_result_t egl_itf_write(egl_interface_t* itf, void* buff, size_t* len)
   assert(buff);
 
   if(itf->write == NULL)
-    {
-      return EGL_NOT_SUPPORTED;
-    }
+  {
+    return EGL_NOT_SUPPORTED;
+  }
 
-  *len = itf->write(buff, *len);
-  
+  if(*len > 0)
+  {
+    *len = itf->write(buff, *len);
+  }
+
   return EGL_SUCCESS;
 }
 
@@ -54,12 +57,15 @@ egl_result_t egl_itf_read(egl_interface_t* itf, void* buff, size_t* len)
   assert(buff);
 
   if(itf->read == NULL)
-    {
-      return EGL_NOT_SUPPORTED;
-    }
-
-  *len = itf->read(buff, *len);
+  {
+    return EGL_NOT_SUPPORTED;
+  }
   
+  if(*len > 0)
+  {
+    *len = itf->read(buff, *len);
+  }
+
   return EGL_SUCCESS;
 }
 

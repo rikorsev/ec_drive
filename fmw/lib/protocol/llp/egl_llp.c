@@ -34,7 +34,7 @@ static size_t put_data(void *dst, size_t dst_size, uint8_t *src, size_t src_len,
     {
       len = dst_size - count;
       len = len < src_len ? len : src_len;
-      memcpy(dst, src, len);
+      memcpy(dst + count, src, len);
     }
 
   return len;
@@ -42,22 +42,29 @@ static size_t put_data(void *dst, size_t dst_size, uint8_t *src, size_t src_len,
 
 static egl_result_t decode_id(egl_llp_t *llp, uint8_t *raw, size_t *len)
 {
-  size_t decoded_len = put_data(&llp->pack.id,
-				sizeof(llp->pack.id),
-				raw, *len, llp->count);
+  size_t decoded_len = put_data(&llp->in.id,
+                                sizeof(llp->in.id),
+                                raw, *len, llp->count);
   
   llp->count += decoded_len;
   *len = decoded_len;
 
-  if(llp->count <= sizeof(llp->pack.id))
+  if(llp->count >= sizeof(llp->in.id))
     {
-      EGL_TRACE_DEBUG("id: 0x%04x\r\n", llp->pack.id);
+      EGL_TRACE_DEBUG("id: 0x%04x\r\n", llp->in.id);
       
       llp->count = 0;
-      if(egl_llp_req_handler_get(llp->pack.id,  llp->req_map, llp->req_map_len) != NULL)
-	{
-	  llp->state = EGL_LLP_META_STATE_LEN;	  
-	}
+      if(egl_llp_req_handler_get(llp->in.id,  llp->req_map, llp->req_map_len) != NULL)
+      {
+        llp->state = EGL_LLP_META_STATE_LEN;	  
+      }
+      else
+      {
+        /* set that only one byte parset to pars id from the next byte next time */
+        llp->in.id >>= 8;
+        llp->count = 1;
+        *len = 1;
+      }
     }
   
   return EGL_PROCESS;
@@ -66,25 +73,25 @@ static egl_result_t decode_id(egl_llp_t *llp, uint8_t *raw, size_t *len)
 static egl_result_t decode_len(egl_llp_t *llp, uint8_t *raw, size_t *len)
 {
   egl_result_t result = EGL_PROCESS;
-  size_t decoded_len = put_data(&llp->pack.len,
-				sizeof(llp->pack.len),
+  size_t decoded_len = put_data(&llp->in.len,
+				sizeof(llp->in.len),
 				raw, *len, llp->count);
   
   llp->count += decoded_len;
   *len = decoded_len;
   
-  if(llp->count <= sizeof(llp->pack.len))
+  if(llp->count >= sizeof(llp->in.len))
     {
-      EGL_TRACE_DEBUG("len: 0x%04x\r\n", llp->pack.len);
+      EGL_TRACE_DEBUG("len: 0x%04x\r\n", llp->in.len);
 
-      if(llp->pack.len <= llp->buff_size)
+      if(llp->in.len <= llp->in_buff_size)
 	{
 	  llp->state = EGL_LLP_META_STATE_DATA;
 	}
       else
 	{
-	  EGL_TRACE_ERROR("Packet len %d more then max %d\r\n", llp->pack.len,
-			                                        llp->buff_size);
+	  EGL_TRACE_ERROR("Packet len %d more then max %d\r\n", llp->in.len,
+			  llp->in_buff_size);
 	  llp->state = EGL_LLP_META_STATE_ID;
 	  result = EGL_OUT_OF_BOUNDARY;
 	}
@@ -97,14 +104,14 @@ static egl_result_t decode_len(egl_llp_t *llp, uint8_t *raw, size_t *len)
 
 static egl_result_t decode_data(egl_llp_t *llp, uint8_t *raw, size_t *len)
 {
-  size_t decoded_len = put_data(llp->pack.data,
-				llp->pack.len,
+  size_t decoded_len = put_data(llp->in.data,
+				llp->in.len,
 				raw, *len, llp->count);
   
   llp->count += decoded_len;
   *len = decoded_len;
   
-  if(llp->count <= llp->pack.len)
+  if(llp->count <= llp->in.len)
     {
       llp->count = 0;
       llp->state = EGL_LLP_META_STATE_CHECKSUM;
@@ -117,30 +124,30 @@ static egl_result_t decode_checksum(egl_llp_t *llp, uint8_t *raw, size_t *len)
 {
   uint16_t checksum   = 0;
   egl_result_t result = EGL_PROCESS;
-  size_t decoded_len  = put_data(&llp->pack.checksum,
-				 sizeof(llp->pack.checksum),
+  size_t decoded_len  = put_data(&llp->in.checksum,
+				 sizeof(llp->in.checksum),
 				 raw, *len, llp->count);
 
   llp->count += decoded_len;
   *len = decoded_len;
   
-  if(llp->count <= sizeof(llp->pack.checksum))
+  if(llp->count >= sizeof(llp->in.checksum))
     {
       llp->count = 0;
       llp->state = EGL_LLP_META_STATE_ID;
 
       egl_crc_reset(llp->crc());
-      checksum = egl_crc16_calc(llp->crc(), &llp->pack.id, sizeof(llp->pack.id));
-      checksum = egl_crc16_calc(llp->crc(), &llp->pack.len, sizeof(llp->pack.len));
+      checksum = egl_crc16_calc(llp->crc(), &llp->in.id, sizeof(llp->in.id));
+      checksum = egl_crc16_calc(llp->crc(), &llp->in.len, sizeof(llp->in.len));
 	
-      if(llp->pack.data != NULL)
+      if(llp->in.data != NULL)
 	{
-	  checksum = egl_crc16_calc(llp->crc(), llp->pack.data, llp->pack.len);
+	  checksum = egl_crc16_calc(llp->crc(), llp->in.data, llp->in.len);
 	}
       
-      EGL_TRACE_DEBUG("CRC16: calc: 0x%04x, got: 0x%04x\r\n", checksum, llp->pack.checksum);
+      EGL_TRACE_DEBUG("CRC16: calc: 0x%04x, got: 0x%04x\r\n", checksum, llp->in.checksum);
       
-      result = checksum == llp->pack.checksum ? EGL_SUCCESS : EGL_FAIL ;
+      result = checksum == llp->in.checksum ? EGL_SUCCESS : EGL_FAIL ;
     }
   
   return result;
@@ -152,8 +159,8 @@ egl_result_t egl_llp_decode(void *meta, uint8_t *raw, size_t *len)
   egl_result_t result = EGL_FAIL;
 
   assert(meta != NULL);
-  assert(raw != NULL);
-  assert(len != NULL);
+  assert(raw  != NULL);
+  assert(len  != NULL);
   
   switch(llp->state)
     {
@@ -185,62 +192,82 @@ egl_result_t egl_llp_decode(void *meta, uint8_t *raw, size_t *len)
   return result;
 }
 
-egl_result_t egl_llp_encode(void *meta, uint8_t *encoded, size_t *len);
+//static egl_result_t egl_llp_encode(void *meta, uint8_t *encoded, size_t *len);
+static egl_result_t encode(egl_llp_t *llp, uint8_t *out, size_t *len)
 {
-  egl_llp_t *llp   = (egl_llp_pack_t *)meta;
+  //egl_llp_t *llp   = (egl_llp_pack_t *)meta;
   size_t offset    = 0;
-  size_t pack_size = sizeof(llp->pack.id) +
-                     sizeof(llp->pack.len) +
-                     sizeof(llp->pack.checksum) +
-                     ppl->pack.len;
+  size_t pack_size = sizeof(llp->out.id) +
+                     sizeof(llp->out.len) +
+                     sizeof(llp->out.checksum) +
+                     llp->out.len;
     
-  assert(meta    != NULL);
-  assert(encoded != NULL);
-  assert(len     != NULL)
+  assert(llp     != NULL);
+  assert(out     != NULL);
+  assert(len     != NULL);
   
-  if(pack_size > *len)
-    {
-      EGL_TRACE_ERROR("Packet len %d more then buff size %d\r\n", pack->len, *len);
-      return EGL_OUT_OF_BOUNDARY;
-    }
+    if(pack_size > *len)
+      {
+	EGL_TRACE_ERROR("Packet len %d more then buff size %d\r\n", llp->out.len, *len);
+	return EGL_OUT_OF_BOUNDARY;
+      }
 
-  if(llp->pack.len > 0 && lpp->pack.data == NULL)
+  if(llp->out.len > 0 && llp->out.data == NULL)
     {
-      EGL_TRACE_ERROR("Data len is % but data is NULL\r\n", llp->pack.len);
+      EGL_TRACE_ERROR("Data len is %d but data is NULL\r\n", llp->out.len);
       return EGL_INVALID_PARAM;
     }
   
-  memset(encoded, 0, *len);
+  memset(out, 0, *len);
 
-  memcpy(encoded, &llp->pack.id, sizeof(llp->pack.id));
-  offset += sizeof(pack->id);
+  memcpy(out, &llp->out.id, sizeof(llp->out.id));
+  offset += sizeof(llp->out.id);
 
-  memcpy(encoded + offset, &llp->pack.len, sizeof(llp->pack.len));
-  offset += sizeof(llp->pack.len);
+  memcpy(out + offset, &llp->out.len, sizeof(llp->out.len));
+  offset += sizeof(llp->out.len);
 
-  memcpy(encoded + offset, llp->pack.data, llp->pack.len);
-  offset += pack->len;
+  memcpy(out + offset, llp->out.data, llp->out.len);
+  offset += llp->out.len;
 
-  llp->pack.checksum = egl_crc16_calc(llp->crc(), llp->pack.data, llp->pack.len);
-  memcpy(encoded + offset, &llp->pack.checksum, sizeof(llp->pack.checksum));
-  offset += sizeof(llp->pack.checksum);
+  /* Calc CRC */
+  egl_crc_reset(llp->crc());
+  egl_crc16_calc(llp->crc(), &llp->in.id, sizeof(llp->in.id));
+  egl_crc16_calc(llp->crc(), &llp->in.len, sizeof(llp->in.len));
+  llp->out.checksum = egl_crc16_calc(llp->crc(), llp->out.data, llp->out.len);
+  
+  memcpy(out + offset, &llp->out.checksum, sizeof(llp->out.checksum));
+  offset += sizeof(llp->out.checksum);
 
   *len = offset;
 
   return EGL_SUCCESS;
 }
 
-egl_result_t egl_llp_handle(void *meta)
+egl_result_t egl_llp_handle(void *meta, uint8_t *out, size_t *len)
 {
-  egl_result_t result       = EGL_FAIL;
+  egl_result_t result       = EGL_NOT_SUPPORTED;
   egl_llp_t *llp            = (egl_llp_t *) meta;
-  egl_llp_handler_t handler = egl_llp_req_handler_get(llp->pack.id,
-						      llp->req_map,
-						      llp->req_map_len);
+  size_t out_len            = 0;
+  egl_llp_handler_t handler = egl_llp_req_handler_get(llp->in.id,
+                                                      llp->req_map,
+                                                      llp->req_map_len);
 
   if(handler != NULL)
     {
-      result = handler(llp->pack.data, llp->pack.len);      
+      result = handler(llp->in.data, 
+                       llp->in.len, 
+                       llp->out.data, 
+                       &out_len);
+      if(result == EGL_SUCCESS)
+      {
+        llp->out.id  = llp->in.id;
+        llp->out.len = out_len;
+        result       = encode(llp, out, len);
+      }
+    }
+    else
+    {
+      EGL_TRACE_ERROR("No handler foind for command 0x%04x\r\n", llp->in.id);
     }
 
   return result;

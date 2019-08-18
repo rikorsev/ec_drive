@@ -106,7 +106,7 @@ static void init(void)
   TIM_CCPreloadControl(ECD_BLDC_PWM_TIMER, ENABLE);
 } 
 
-static egl_result_t bool start(void)
+static egl_result_t start(void)
 {
   /* TIM1 counter enable */
   TIM_Cmd(ECD_BLDC_PWM_TIMER, ENABLE);

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "egl_result.h"
 #include "egl_bldc_motor.h"
 
 void egl_bldc_init(egl_bldc_t *motor)

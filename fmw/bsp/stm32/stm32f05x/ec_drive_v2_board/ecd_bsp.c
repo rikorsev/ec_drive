@@ -16,4 +16,6 @@ void ecd_bsp_init(void)
   egl_itf_init    (ecd_spi());
   egl_bldc_init   (ecd_bldc_motor());
   egl_crc_init    (ecd_crc(), CRC_POLY, CRC_START_VAL);
+  egl_pio_init    (ecd_int_pin());
+  egl_pio_init    (ecd_int2_pin());
 }

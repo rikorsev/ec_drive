@@ -87,6 +87,6 @@ egl_result_t      egl_bldc_set_power     (egl_bldc_t *motor, uint16_t power);
 uint32_t          egl_bldc_get_speed     (egl_bldc_t *motor);
 int16_t           egl_bldc_get_load      (egl_bldc_t *motor);
 egl_bldc_state_t  egl_bldc_get_state     (egl_bldc_t *motor);
-void              egl_bldc_hall_handler  (egl_bldc_t *motor);
+egl_result_t      egl_bldc_hall_handler  (egl_bldc_t *motor);
   
 #endif //EGL_BLDC_MOTOR

@@ -6,6 +6,7 @@ OBJCOPY=arm-none-eabi-objcopy
 STFLASH=st-flash
 OPENOCD=openocd
 GDB=gdb-multiarch
+REMOTE=pi
 
 # Pathes
 OBJ_DIR=./obj
@@ -34,6 +35,7 @@ INCLUDE+=-I$(LIB_DIR)/func/delay
 INCLUDE+=-I$(LIB_DIR)/func/trace
 INCLUDE+=-I$(LIB_DIR)/func/bldc
 INCLUDE+=-I$(LIB_DIR)/func/crc
+INCLUDE+=-I$(LIB_DIR)/func/pio
 INCLUDE+=-I$(LIB_DIR)/protocol
 INCLUDE+=-I$(LIB_DIR)/protocol/llp
 
@@ -58,6 +60,8 @@ SRC_BSP+=$(BSP_DIR)/ecd_bsp.c
 SRC_BSP+=$(BSP_DIR)/man_ctl/ecd_man_ctl.c
 SRC_BSP+=$(BSP_DIR)/spi/ecd_spi.c
 SRC_BSP+=$(BSP_DIR)/crc/ecd_crc.c
+SRC_BSP+=$(BSP_DIR)/int_pin/ecd_int_pin.c
+SRC_BSP+=$(BSP_DIR)/int2_pin/ecd_int2_pin.c
 
 # Peripheral library files
 SRC_PERIPH+=$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c
@@ -97,8 +101,10 @@ SRC_LIB+=$(LIB_DIR)/func/bldc/egl_bldc_motor.c
 SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc.c
 SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_ccitt.c
 SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_xmodem.c
+SRC_LIB+=$(LIB_DIR)/func/pio/egl_pio.c
 SRC_LIB+=$(LIB_DIR)/protocol/egl_protocol.c
 SRC_LIB+=$(LIB_DIR)/protocol/llp/egl_llp.c
+
 
 SRC+=$(SRC_PERIPH)
 SRC+=$(SRC_APP)
@@ -170,12 +176,18 @@ $(STARTUPOBJ):
 $(HEX): $(TARGET)
 	$(OBJCOPY) -O ihex $(TARGET) $(HEX)
 
+reset: 
+	$(STFLASH) reset
+	
+reset_remote:
+	ssh $(REMOTE) $(STFLASH) reset
+
 upload: $(HEX)
 	$(STFLASH) --format ihex write $(HEX)
 
-upload_pi: $(HEX)
-	scp $(HEX) pi:~
-	ssh pi $(STFLASH) --format ihex write $(TARGET_HEX)
+upload_remote: $(HEX)
+	scp $(HEX) $(REMOTE):~
+	ssh $(REMOTE) $(STFLASH) --format ihex write $(TARGET_HEX)
 
 erase:
 	$(STFLASH) erase
@@ -185,16 +197,16 @@ debug: $(TARGET)
 	$(GDB) -ex "target remote localhost:3333" -ex "b main" -ex "monitor reset halt" -ex "c" $(TARGET)
 	pkill xterm
 
-debug_pi: $(TARGET)
+debug_remote: $(TARGET)
 	setsid xterm -e 'bash -c "ssh pi $(OPENOCD) -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg -f ecd_openocd.cfg"' >/dev/null 2>&1 < /dev/null &
 	$(GDB) -ex "target remote 192.168.0.162:3333" -ex "b main" -ex "monitor reset halt" -ex "c" $(TARGET)
-	ssh pi pkill $(OPENOCD)
+	ssh $(REMOTE) pkill $(OPENOCD)
 	pkill xterm
 
 rebuild: clean $(TARGET)
 
 check-syntax:
-	$(CC) -o nul -S ${CHK_SOURCES}
+	$(CC) $(CFLAGS) $(INCLUDE) -o nul -S ${CHK_SOURCES}
 
 $(OBJ_DIR):
 	mkdir $(OBJ_DIR)

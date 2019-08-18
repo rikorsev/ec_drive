@@ -2,18 +2,20 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "egl_lib.h"
+#include "ecd_bsp.h"
 
 #define SPI_LLP_BUFF_SIZE (64)
 
-static egl_result_t motor_start(void *data, size_t len)
+static egl_result_t motor_start(const void *in, size_t len_in, void *out, size_t *len_out)
 {
   egl_result_t result = EGL_SUCCESS;
   
   EGL_TRACE_INFO("Motor start\r\n");
   
-  result = egl_bldc_start(ecd_bldc_motor());  
+  result = egl_bldc_start(ecd_bldc_motor());
   if(result != EGL_SUCCESS)
     {
       EGL_TRACE_INFO("Motor start - fail\r\n");
@@ -22,7 +24,7 @@ static egl_result_t motor_start(void *data, size_t len)
   return result;
 }
 
-static egl_result_t motor_stop(void *data, size_t len)
+static egl_result_t motor_stop(const void *in, size_t len_in, void *out, size_t *len_out)
 {
   egl_result_t result = EGL_SUCCESS;
   
@@ -37,27 +39,35 @@ static egl_result_t motor_stop(void *data, size_t len)
   return result;
 }
 
-static uint16_t motor_power_convert(uint32_t)
+static uint16_t motor_power_convert(uint32_t val)
 {
   return 0; /*TBD*/
 }
 
-static egl_result_t motor_power_set(void *data, size_t len)
+static egl_result_t motor_power_set(const void *in, size_t len_in, void *out, size_t *len_out)
 {
-  uint32_t speed = *(uint32_t *)data;
+  uint32_t speed = *(uint32_t *)in;
   egl_result_t result = EGL_SUCCESS;
   
   EGL_TRACE_INFO("Motor set speed %d\r\n", speed);
 
-  result = egl_bldc_set_power(ecd_bldc_motor(), motor_speed_convert(speed));
+  result = egl_bldc_set_power(ecd_bldc_motor(), motor_power_convert(speed));
 
-  return
+  return result;
 }
 
-static egl_result_t test_command(void *data, size_t len)
+static egl_result_t test_command(const void *in, size_t len_in, void *out, size_t *len_out)
 {
-  uint32_t test_data = *(uint32_t *)data;
-  EGL_TRACE_INFO("Test command. Test data %d (0x%08x)\r\n", test_data);
+
+  EGL_TRACE_INFO("Test command\r\n");
+
+  for(int i = 0; i < len_in; i++)
+    {
+      EGL_TRACE_INFO("In: 0x%02x\r\n", ((uint8_t*)in)[i]);
+    }
+
+  memcpy(out, in, len_in);
+  *len_out = len_in;
 
   return EGL_SUCCESS;
 }
@@ -70,9 +80,10 @@ static const egl_llp_req_t cmd_map[] =
     { 0xC0FF, test_command    }
   };
 
-EGL_LLP_DECLARE(spi_llp_impl, cmd_map, egl_crc16_xmodem, SPI_LLP_BUFF_SIZE);
+EGL_LLP_DECLARE(spi_llp_impl, cmd_map, egl_crc16_xmodem, SPI_LLP_BUFF_SIZE, SPI_LLP_BUFF_SIZE);
 
 egl_ptc_t* spi_llp(void)
 {
   return &spi_llp_impl;
 }
+

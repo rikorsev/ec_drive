@@ -8,39 +8,40 @@
 #include "egl_protocol.h"
 #include "egl_trace.h"
 
-egl_result_t egl_ptc_decode(egl_ptc_t *ptc, uint8_t *data, size_t *len)
+egl_result_t egl_ptc_decode(egl_ptc_t *ptc, uint8_t *in, size_t *len_in, uint8_t *out, size_t *len_out)
 {
   egl_result_t result = EGL_FAIL;
-  size_t offset = 0;
-  size_t remain = *len;
-  
+  size_t offset_in    = 0;
+  size_t offset_out   = 0;
+  size_t remain_in    = *len_in;
+  size_t remain_out   = *len_out;
+
   assert(ptc         != NULL);
-  assert(data        != NULL);
-  assert(len         != NULL);
+  assert(in          != NULL);
+  assert(out         != NULL);
+  assert(len_in      != NULL);
+  assert(len_out     != NULL);
   assert(ptc->decode != NULL);
   assert(ptc->handle != NULL);
   assert(ptc->meta   != NULL);
   
-  while(*len - offset > 0)
+  while(*len_in - offset_in > 0 && *len_out - offset_out > 0)
     {
-      remain = *len - offset;
-      result = ptc->decode(ptc->meta, data + offset, &remain);
+      remain_in = *len_in - offset_in;
+      result = ptc->decode(ptc->meta, in + offset_in, &remain_in);
+      offset_in  += remain_in;
       
       if(result == EGL_SUCCESS)
-	{
-	  result = ptc->handle(ptc->meta);
-	}
-      offset += remain;
+      {
+        remain_out = *len_out - offset_out;
+        result = ptc->handle(ptc->meta, out + offset_out, &remain_out);
+        offset_out += remain_out;
+      }
     }
 
-  *len = offset;
+  *len_in = offset_in;
+  *len_out = offset_out;
+  
   return result;
 }
 
-egl_result_t egl_ptc_encode(egl_ptc_t, uint8_t *encoded, size_t *len)
-{
-  assert(ptc         != NULL);
-  assert(encoded     != NULL);
-  assert(len         != NULL);
-  assert(ptc->meta   != NULL);
-}
