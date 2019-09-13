@@ -119,31 +119,48 @@ static void deinit(void)
 
 void EXTI0_1_IRQHandler(void)
 {
+  egl_result_t result = EGL_SUCCESS;
+
+
   if(EXTI_GetITStatus(ECD_BLDC_HALL_1_EXTI) == SET)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_1_EXTI);
 
-      //egl_led_toggle(ecd_led());
-      egl_bldc_hall_handler(ecd_bldc_motor());
+      egl_led_toggle(ecd_led());
+      result = egl_bldc_hall_handler(ecd_bldc_motor());
+      if(result != EGL_SUCCESS)
+      {
+        EGL_TRACE_ERROR("Hall 1 handler fail. Result: %s\r\n", EGL_RESULT());
+      }
     }
   
   if(EXTI_GetITStatus(ECD_BLDC_HALL_2_EXTI) == SET)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_2_EXTI);
 
-      //egl_led_toggle(ecd_led());
-      egl_bldc_hall_handler(ecd_bldc_motor());
+      egl_led_toggle(ecd_led());
+      result = egl_bldc_hall_handler(ecd_bldc_motor());
+      if(result != EGL_SUCCESS)
+      {
+        EGL_TRACE_ERROR("Hall 2 handler fail. Result: %s\r\n", EGL_RESULT());
+      }
     }
 }
 
 void EXTI4_15_IRQHandler(void)
 {
+  egl_result_t result = EGL_SUCCESS;
+
   if(EXTI_GetITStatus(ECD_BLDC_HALL_3_EXTI) == SET)
     {
       EXTI_ClearITPendingBit(ECD_BLDC_HALL_3_EXTI);
 
-      //egl_led_toggle(ecd_led());
-      egl_bldc_hall_handler(ecd_bldc_motor());
+      egl_led_toggle(ecd_led());
+      result = egl_bldc_hall_handler(ecd_bldc_motor());
+      if(result != EGL_SUCCESS)
+      {
+        EGL_TRACE_ERROR("Hall 3 handler fail. Result: %s\r\n", EGL_RESULT());
+      }
     }
 }
 

@@ -58,15 +58,23 @@ egl_result_t egl_bldc_start(egl_bldc_t *motor)
   assert(motor->pwm->start != NULL);
   
   if(motor->state != EGL_BLDC_MOTOR_IN_WORK)
+  {
+    result = motor->pwm->start();
+    if(result == EGL_SUCCESS)
     {
-      if(motor->pwm->start() == true)
-	{
-	  motor->state = EGL_BLDC_MOTOR_IN_WORK;
-	  egl_bldc_hall_handler(motor);
-	  motor->speed->start();
-	  result = EGL_SUCCESS;
-	}
+      motor->state = EGL_BLDC_MOTOR_IN_WORK;
+      result = egl_bldc_hall_handler(motor);
+      if(result == EGL_SUCCESS)
+      {
+        motor->speed->start();
+      }
+      else
+      {
+        motor->pwm->stop();
+        motor->state = EGL_BLDC_MOTOR_ERROR;
+      }
     }
+  }
   
   return result;
 }
@@ -78,14 +86,18 @@ egl_result_t egl_bldc_stop(egl_bldc_t *motor)
   assert(motor             != NULL);
   assert(motor->pwm        != NULL);
   assert(motor->pwm->stop  != NULL);
-  
-  if(motor->pwm->stop() == true)
-    {
-      motor->speed->stop();
-      motor->state = EGL_BLDC_MOTOR_READY;
-      result = EGL_SUCCESS;
-    }
-  
+
+  motor->speed->stop();
+  result = motor->pwm->stop();  
+  if(result == EGL_SUCCESS)
+  {
+    motor->state = EGL_BLDC_MOTOR_READY;
+  }
+  else
+  {
+    motor->state = EGL_BLDC_MOTOR_ERROR;
+  }
+
   return result;
 }
 
@@ -96,12 +108,14 @@ egl_result_t egl_bldc_hall_handler(egl_bldc_t *motor)
   if(motor->state == EGL_BLDC_MOTOR_IN_WORK)
   {
     motor->speed->update();
-    if(EGL_SUCCESS != motor->pwm->switch_wind(motor->hall->get(), motor->dir))
-      {
-	egl_bldc_stop(motor);
-	motor->state = EGL_BLDC_MOTOR_ERROR;
-      }
-   }
+    
+    result = motor->pwm->switch_wind(motor->hall->get(), motor->dir);
+    if(result != EGL_SUCCESS)
+    {
+      egl_bldc_stop(motor);
+      motor->state = EGL_BLDC_MOTOR_ERROR;
+    }
+  }
 
   return result;
 }

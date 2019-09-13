@@ -82,6 +82,40 @@ static void spi(void)
     }
 }  
 
+void motor_test(void)
+{
+  egl_result_t result;
+
+  result = egl_bldc_set_power(ecd_bldc_motor(), 32);
+  if(result != EGL_SUCCESS)
+  {
+    EGL_TRACE_ERROR("Set motor power - fail. Result: %s\r\n", EGL_RESULT());
+    return;
+  }
+
+  EGL_TRACE_INFO("Motor power set\r\n");
+
+  result = egl_bldc_start(ecd_bldc_motor());
+  if(result != EGL_SUCCESS)
+  {
+    EGL_TRACE_ERROR("Start motor - fail. Result: %s\r\n", EGL_RESULT());
+    return;
+  }
+
+  EGL_TRACE_INFO("Motor started\r\n");
+
+  egl_delay(ms, 1000);
+
+  result = egl_bldc_stop(ecd_bldc_motor());
+  if(result != EGL_SUCCESS)
+  {
+    EGL_TRACE_ERROR("Stop motor - fail. Result: %s\r\n", EGL_RESULT());
+    return;
+  }
+
+  EGL_TRACE_INFO("Motor stoped\r\n");
+}
+
 int main(void)
 {
   uint8_t test_data[] = {0x01, 0xC0, 0x00, 0x00};
@@ -102,6 +136,8 @@ int main(void)
   crc = egl_crc16_calc(egl_crc16_xmodem(), test_data, sizeof(test_data));
 
   EGL_TRACE_INFO("Test CRC16: 0x%04x\r\n", crc);
+  
+  //motor_test();
   
   while(1)
   {
