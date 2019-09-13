@@ -19,10 +19,6 @@
 #define ECD_BLDC_HALL_STATE_5      (ECD_BLDC_HALL_2_PIN | ECD_BLDC_HALL_3_PIN)
 #define ECD_BLDC_HALL_STATE_6      (ECD_BLDC_HALL_3_PIN)
 
-#define ECD_BLDC_HALL_1_EXTI       (EXTI_Line0)
-#define ECD_BLDC_HALL_2_EXTI       (EXTI_Line1)
-#define ECD_BLDC_HALL_3_EXTI       (EXTI_Line11)
-
 #define ECD_BLDC_HALL_MASK         ((uint16_t)0x0803)
 
 static void init(void)
@@ -115,53 +111,6 @@ static void deinit(void)
   nvic.NVIC_IRQChannel         = ECD_BLDC_HALL_IRQ;
   nvic.NVIC_IRQChannelCmd      = DISABLE;
   NVIC_Init(&nvic);
-}
-
-void EXTI0_1_IRQHandler(void)
-{
-  egl_result_t result = EGL_SUCCESS;
-
-
-  if(EXTI_GetITStatus(ECD_BLDC_HALL_1_EXTI) == SET)
-    {
-      EXTI_ClearITPendingBit(ECD_BLDC_HALL_1_EXTI);
-
-      egl_led_toggle(ecd_led());
-      result = egl_bldc_hall_handler(ecd_bldc_motor());
-      if(result != EGL_SUCCESS)
-      {
-        EGL_TRACE_ERROR("Hall 1 handler fail. Result: %s\r\n", EGL_RESULT());
-      }
-    }
-  
-  if(EXTI_GetITStatus(ECD_BLDC_HALL_2_EXTI) == SET)
-    {
-      EXTI_ClearITPendingBit(ECD_BLDC_HALL_2_EXTI);
-
-      egl_led_toggle(ecd_led());
-      result = egl_bldc_hall_handler(ecd_bldc_motor());
-      if(result != EGL_SUCCESS)
-      {
-        EGL_TRACE_ERROR("Hall 2 handler fail. Result: %s\r\n", EGL_RESULT());
-      }
-    }
-}
-
-void EXTI4_15_IRQHandler(void)
-{
-  egl_result_t result = EGL_SUCCESS;
-
-  if(EXTI_GetITStatus(ECD_BLDC_HALL_3_EXTI) == SET)
-    {
-      EXTI_ClearITPendingBit(ECD_BLDC_HALL_3_EXTI);
-
-      egl_led_toggle(ecd_led());
-      result = egl_bldc_hall_handler(ecd_bldc_motor());
-      if(result != EGL_SUCCESS)
-      {
-        EGL_TRACE_ERROR("Hall 3 handler fail. Result: %s\r\n", EGL_RESULT());
-      }
-    }
 }
 
 egl_bldc_hall_t ecd_bldc_hall_impl =

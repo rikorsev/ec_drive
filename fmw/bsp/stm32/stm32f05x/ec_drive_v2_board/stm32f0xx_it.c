@@ -30,6 +30,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include <assert.h>
 #include "stm32f0xx_it.h"
+#include "egl_lib.h"
+#include "ecd_bsp.h"
 /** @addtogroup STM32F0xx_StdPeriph_Examples
   * @{
   */
@@ -114,6 +116,56 @@ void SysTick_Handler(void)
 /*void PPP_IRQHandler(void)
 {
 }*/
+
+void EXTI0_1_IRQHandler(void)
+{
+  egl_result_t result = EGL_SUCCESS;
+
+
+  if(EXTI_GetITStatus(ECD_BLDC_HALL_1_EXTI) == SET)
+    {
+      EXTI_ClearITPendingBit(EXTI_ECD_BLDC_HALL_1_EXTILine0);
+
+      egl_led_toggle(ecd_led());
+      result = egl_bldc_hall_handler(ecd_bldc_motor());
+      if(result != EGL_SUCCESS)
+      {
+        EGL_TRACE_ERROR("Hall 1 handler fail. Result: %s\r\n", EGL_RESULT());
+      }
+    }
+  
+  if(EXTI_GetITStatus(ECD_BLDC_HALL_2_EXTI) == SET)
+    {
+      EXTI_ClearITPendingBit(ECD_BLDC_HALL_2_EXTI);
+
+      egl_led_toggle(ecd_led());
+      result = egl_bldc_hall_handler(ecd_bldc_motor());
+      if(result != EGL_SUCCESS)
+      {
+        EGL_TRACE_ERROR("Hall 2 handler fail. Result: %s\r\n", EGL_RESULT());
+      }
+    }
+}
+
+void EXTI4_15_IRQHandler(void)
+{
+  egl_result_t result = EGL_SUCCESS;
+
+  if(EXTI_GetITStatus(ECD_BLDC_HALL_3_EXTI) == SET)
+    {
+      EXTI_ClearITPendingBit(ECD_BLDC_HALL_3_EXTI);
+
+      egl_led_toggle(ecd_led());
+      result = egl_bldc_hall_handler(ecd_bldc_motor());
+      if(result != EGL_SUCCESS)
+      {
+        EGL_TRACE_ERROR("Hall 3 handler fail. Result: %s\r\n", EGL_RESULT());
+      }
+    }
+}
+
+
+
 
 /**
   * @}
