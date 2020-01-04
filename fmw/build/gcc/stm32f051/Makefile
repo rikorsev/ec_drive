@@ -134,7 +134,8 @@ CFLAGS=                            \
 -ffunction-sections                \
 -DSTM32F051                        \
 -DUSE_STDPERIPH_DRIVER             \
--DUSE_FULL_ASSERT
+-DUSE_FULL_ASSERT                  \
+-O0
 
 # Linker flags
 LDFLAGS=                           \
@@ -150,7 +151,7 @@ LDFLAGS=                           \
 -ffunction-sections                \
 -Wl,--gc-sections                  \
 -Wl,-Map=$(TARGET).map             \
--Wl,-script="stm32f0xx.ld"
+-Wl,-script="stm32f0xx.ld"         
 
 # Target settings
 TARGET_NAME=ec_drive
@@ -171,7 +172,7 @@ $(OBJ_DIR)/%.o: %.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
 $(STARTUPOBJ):
-	$(CC) -c $(CFLAGS) $(INCLUDES) $(STARTUP_FILE) -o $(STARTUPOBJ)
+	$(CC) -c $(CFLAGS) $(STARTUP_FILE) -o $(STARTUPOBJ)
 
 $(HEX): $(TARGET)
 	$(OBJCOPY) -O ihex $(TARGET) $(HEX)

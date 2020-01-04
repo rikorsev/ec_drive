@@ -19,22 +19,30 @@ static void init(void)
 static egl_result_t set(bool state)
 {
   if(state == true)
-    {
-      GPIO_SetBits(ECD_BLDC_INT_PORT, ECD_BLDC_INT_PIN);
-    }
+  {
+    GPIO_SetBits(ECD_BLDC_INT_PORT, ECD_BLDC_INT_PIN);
+  }
   else
-    {
-      GPIO_ResetBits(ECD_BLDC_INT_PORT, ECD_BLDC_INT_PIN);
-    }
+  {
+    GPIO_ResetBits(ECD_BLDC_INT_PORT, ECD_BLDC_INT_PIN);
+  }
   
-  return EGL_NOT_SUPPORTED;
+  return EGL_SUCCESS;
+}
+
+static egl_result_t get(void)
+{
+  uint8_t state = GPIO_ReadOutputDataBit(ECD_BLDC_INT_PORT, ECD_BLDC_INT_PIN);
+
+  return state == Bit_SET ? EGL_SET : EGL_RESET;
 }
 
 static egl_pio_t ecd_int2_pin_impl = 
-  {
-    .init = init,
-    .set  = set,
-  };
+{
+  .init = init,
+  .set  = set,
+  .get  = get
+};
 
 egl_pio_t *ecd_int2_pin(void)
 {

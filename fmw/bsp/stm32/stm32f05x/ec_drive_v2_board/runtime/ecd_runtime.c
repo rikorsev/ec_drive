@@ -1,7 +1,7 @@
 #include <string.h>
 #include "egl_lib.h"
 
-static uint32_t runtime_val = 0;
+static volatile uint32_t runtime_val = 0;
 
 static uint32_t get(void)
 {

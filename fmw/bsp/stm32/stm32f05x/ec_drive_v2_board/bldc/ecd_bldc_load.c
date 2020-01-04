@@ -10,6 +10,11 @@
 #define ECD_BLDC_LOAD_OFFSET            (2048)
 #define ECD_BLDC_LOAD_NUM_OF_AVAREGIN   (100)
 
+/* prototype of get function o calculate reference load */
+static int16_t get(void);
+
+static int16_t ref_load = 0;
+
 static void gpio_init(void)
 {
   GPIO_InitTypeDef config = {0};
@@ -53,6 +58,7 @@ static void init(void)
 {
   gpio_init();
   adc_init();
+  ref_load = get();
 }
 
 static void update(void)
@@ -64,8 +70,6 @@ static int16_t get(void)
 {
   int16_t load = 0;
 
-  egl_led_on(ecd_led());
-
   /* Clear other selected files */
   ECD_BLDC_LOAD_ADC->CHSELR = 0;
 
@@ -74,21 +78,18 @@ static int16_t get(void)
   ADC_ChannelConfig(ECD_BLDC_LOAD_ADC, ADC_Channel_6, ADC_SampleTime_1_5Cycles);
   
   for(int i = 0; i < ECD_BLDC_LOAD_NUM_OF_AVAREGIN; i++)
+  {
+    ADC_StartOfConversion(ECD_BLDC_LOAD_ADC);
+
+    while(ADC_GetFlagStatus(ECD_BLDC_LOAD_ADC, ADC_FLAG_EOC) != SET)
     {
-      ADC_StartOfConversion(ECD_BLDC_LOAD_ADC);
-
-      while(ADC_GetFlagStatus(ECD_BLDC_LOAD_ADC, ADC_FLAG_EOC) != SET)
-	{
-	  /* wait fot the end of convertion */
-	}
+	   /* wait fot the end of convertion */
+	  }
       
-      load += ECD_BLDC_LOAD_OFFSET - ADC_GetConversionValue(ECD_BLDC_LOAD_ADC);
-    }
+    load += ADC_GetConversionValue(ECD_BLDC_LOAD_ADC) - ref_load;
+  }
 
-  /* Not necessary to stop conversion as Single-shot mode is used */
-  
-  egl_led_off(ecd_led());
-  
+  /* Not necessary to stop conversion as Single-shot mode is used */  
   return load / ECD_BLDC_LOAD_NUM_OF_AVAREGIN;
 }
 

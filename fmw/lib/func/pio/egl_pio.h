@@ -12,6 +12,7 @@ typedef struct
 void           egl_pio_init   (egl_pio_t *pio);
 egl_result_t   egl_pio_set    (egl_pio_t *pio, bool state);
 egl_result_t   egl_pio_get    (egl_pio_t *pio);
+egl_result_t   egl_pio_toggle (egl_pio_t *pio);
 egl_result_t   egl_pio_deinit (egl_pio_t *pio);
 
 #endif

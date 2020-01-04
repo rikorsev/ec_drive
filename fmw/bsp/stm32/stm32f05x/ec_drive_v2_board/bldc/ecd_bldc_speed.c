@@ -5,7 +5,7 @@
 
 #define ECD_BLDC_SPEED_TIM      (TIM14)
 #define MICROSECONDS_IN_MINUTE  (60000000)
-#define SWITCH_PER_ROTATION     (51) 
+#define SWITCH_PER_ROTATION     (48) 
 
 static volatile uint16_t ecd_bldc_speed_raw = 0;
 

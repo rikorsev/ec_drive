@@ -29,6 +29,7 @@
 #define ECD_BLDC_PWM_C3N_AF_PIN    (GPIO_PinSource1)
 
 #define ECD_BLDC_PWM_TIMER         (TIM1)
+#define TIMER                      (TIM1)
 #define ECD_BLDC_PWM_PERIOD        (320) /* To provide 50kHz PWM frequency (16MHz/50kHz = 320)*/
 #define ECD_BLDC_PWM_DEADTIME      (4)
 
@@ -142,231 +143,285 @@ static egl_result_t set(uint16_t power)
   return EGL_SUCCESS;
 }
 
+#define TIMER_DISABLE_ALL_OUTPUTS()  TIMER->CCER  &= ~0x5555
+
+/* Channel 1 macro */
+#define TIMER_CH1_MODE_RESET()       TIMER->CCMR1 &= ~0x0070
+#define TIMER_CH1_MODE_PWM()         TIMER->CCMR1 |=  0x0060
+#define TIMER_CH1_MODE_ACTIVE()      TIMER->CCMR1 |=  0x0050
+#define TIMER_CH1_MODE_INACTIVE()    TIMER->CCMR1 |=  0x0040
+#define TIMER_CH1_POS_ENABLE()       TIMER->CCER  |=  0x0001
+#define TIMER_CH1_NEG_ENABLE()       TIMER->CCER  |=  0x0004
+
+/* Channel 2 macro */
+#define TIMER_CH2_MODE_RESET()       TIMER->CCMR1 &= ~0x7000
+#define TIMER_CH2_MODE_PWM()         TIMER->CCMR1 |=  0x6000
+#define TIMER_CH2_MODE_ACTIVE()      TIMER->CCMR1 |=  0x5000
+#define TIMER_CH2_MODE_INACTIVE()    TIMER->CCMR1 |=  0x4000     
+#define TIMER_CH2_POS_ENABLE()       TIMER->CCER  |=  0x0010
+#define TIMER_CH2_NEG_ENABLE()       TIMER->CCER  |=  0x0040
+
+/* Channel 3 macro */
+#define TIMER_CH3_MODE_RESET()       TIMER->CCMR2 &= ~0x0070
+#define TIMER_CH3_MODE_PWM()         TIMER->CCMR2 |=  0x0060
+#define TIMER_CH3_MODE_ACTIVE()      TIMER->CCMR2 |=  0x0050
+#define TIMER_CH3_MODE_INACTIVE()    TIMER->CCMR2 |=  0x0040
+#define TIMER_CH3_POS_ENABLE()       TIMER->CCER  |=  0x0100
+#define TIMER_CH3_NEG_ENABLE()       TIMER->CCER  |=  0x0400
+
+#define TIMER_EVT_BREAK()            TIMER->EGR |= 0x0080
+#define TIMER_EVT_COM()              TIMER->EGR |= 0x0020
+
 /* PWM C2P, High C1N */
 static inline void swich_cw_stage_1(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */  
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_ACTIVE();
+  TIMER_CH1_NEG_ENABLE();
+
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_PWM();
+  TIMER_CH2_POS_ENABLE();
+  TIMER_CH2_NEG_ENABLE();
 
   /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_INACTIVE();
 }
 
 /* PWM C3P, High C1N */
 static inline void swich_cw_stage_2(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
+  /* Channel1 configuration */  
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_ACTIVE();
+  TIMER_CH1_NEG_ENABLE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_INACTIVE();
+
+  /* Channel3 configuration */
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_PWM();
+  TIMER_CH3_POS_ENABLE();
+  TIMER_CH3_NEG_ENABLE();
 }
 
 /* PWM C3P, High C2N */
 static inline void swich_cw_stage_3(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_INACTIVE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */  
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_ACTIVE();
+  TIMER_CH2_NEG_ENABLE();
+
+  /* Channel3 configuration */
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_PWM();
+  TIMER_CH3_POS_ENABLE();
+  TIMER_CH3_NEG_ENABLE();
 }
 
 /* PWM C1P, High C2N */
 static inline void swich_cw_stage_4(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_PWM();
+  TIMER_CH1_POS_ENABLE();
+  TIMER_CH1_NEG_ENABLE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
+  /* Channel2 configuration */  
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_ACTIVE();
+  TIMER_CH2_NEG_ENABLE();
+
+  /* Channel3 configuration */
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_INACTIVE();
 }
 
 /* PWM C1P, High C3N */
 static inline void swich_cw_stage_5(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_PWM();
+  TIMER_CH1_POS_ENABLE();
+  TIMER_CH1_NEG_ENABLE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_INACTIVE();
+
+  /* Channel3 configuration */  
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_ACTIVE();
+  TIMER_CH3_NEG_ENABLE();
+
 }
 
 /* PWM C2P, High C3N */
 static inline void swich_cw_stage_6(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_INACTIVE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_PWM();
+  TIMER_CH2_POS_ENABLE();
+  TIMER_CH2_NEG_ENABLE();
+
+  /* Channel3 configuration */  
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_ACTIVE();
+  TIMER_CH3_NEG_ENABLE();
 }
 
 /* PWM C1P, High C2N */
 static inline void swich_ccw_stage_1(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_PWM();
+  TIMER_CH1_POS_ENABLE();
+  TIMER_CH1_NEG_ENABLE();  
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
+  /* Channel2 configuration */  
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_ACTIVE();
+  TIMER_CH2_NEG_ENABLE();
+
+  /* Channel3 configuration */
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_INACTIVE();
 }
 
 /* PWM C1P, High C3N */
 static inline void swich_ccw_stage_2(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_PWM();
+  TIMER_CH1_POS_ENABLE();
+  TIMER_CH1_NEG_ENABLE();  
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_INACTIVE();
+
+  /* Channel3 configuration */  
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_ACTIVE();
+  TIMER_CH3_NEG_ENABLE();
 }
 
 /* PWM C2P, High C3N */
 static inline void swich_ccw_stage_3(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_INACTIVE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_PWM();
+  TIMER_CH2_POS_ENABLE();
+  TIMER_CH2_NEG_ENABLE();  
+
+  /* Channel3 configuration */  
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_ACTIVE();
+  TIMER_CH3_NEG_ENABLE();
 }
 
 /* PWM C2P, High C1N */
 static inline void swich_ccw_stage_4(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */  
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_ACTIVE();
+  TIMER_CH1_NEG_ENABLE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Disable);
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_PWM();
+  TIMER_CH2_POS_ENABLE();
+  TIMER_CH2_NEG_ENABLE();
+
+  /* Channel3 configuration */
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_INACTIVE();  
 }
 /* PWM C3P, High C1N */
 static inline void swich_ccw_stage_5(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Enable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Disable);
+  /* Channel1 configuration */  
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_ACTIVE();
+  TIMER_CH1_NEG_ENABLE();
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_INACTIVE(); 
+
+  /* Channel3 configuration */
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_PWM();
+  TIMER_CH3_POS_ENABLE();
+  TIMER_CH3_NEG_ENABLE();
 }
 
 /* PWM C3P, High C2N */
 static inline void swich_ccw_stage_6(void)
 {
-  /*  Channel1 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_OCMode_Inactive);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_1, TIM_CCxN_Disable);
+  TIMER_DISABLE_ALL_OUTPUTS();
 
-  /*  Channel2 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_OCMode_Active);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCx_Disable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_2, TIM_CCxN_Enable);
+  /* Channel1 configuration */
+  TIMER_CH1_MODE_RESET();
+  TIMER_CH1_MODE_INACTIVE(); 
 
-  /*  Channel3 configuration */
-  TIM_SelectOCxM (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_OCMode_PWM1);
-  TIM_CCxCmd     (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCx_Enable);
-  TIM_CCxNCmd    (ECD_BLDC_PWM_TIMER, TIM_Channel_3, TIM_CCxN_Enable);
+  /* Channel2 configuration */  
+  TIMER_CH2_MODE_RESET();
+  TIMER_CH2_MODE_ACTIVE();
+  TIMER_CH2_NEG_ENABLE();
+
+  /* Channel3 configuration */
+  TIMER_CH3_MODE_RESET();
+  TIMER_CH3_MODE_PWM();
+  TIMER_CH3_POS_ENABLE();
+  TIMER_CH3_NEG_ENABLE();
 }
 
 static const void (* bldc_switc[2][6])(void) =
@@ -392,22 +447,22 @@ static const void (* bldc_switc[2][6])(void) =
 static egl_result_t switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
 {
   if(hall > EGL_BLDC_HALL_STATE_6)
-    {
-      EGL_TRACE_ERROR("Unknow hall state 0x%x\r\n", hall);
-      return EGL_INVALID_PARAM;
-    }
+  {
+    EGL_TRACE_ERROR("Unknow hall state 0x%x\r\n", hall);
+    return EGL_INVALID_PARAM;
+  }
 
   if(dir > EGL_BLDC_MOTOR_DIR_CCW)
-    {
-      EGL_TRACE_ERROR("Unknow direction 0x%x\r\n", dir);
-      return EGL_INVALID_PARAM;
-    }
+  {
+    EGL_TRACE_ERROR("Unknow direction 0x%x\r\n", dir);
+    return EGL_INVALID_PARAM;
+  }
 
   bldc_switc[dir][hall]();
 
-  TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_Break);
-  TIM_GenerateEvent(ECD_BLDC_PWM_TIMER, TIM_EventSource_COM);
-  
+  TIMER_EVT_BREAK();
+  TIMER_EVT_COM();
+
   return EGL_SUCCESS;
 }
 
@@ -417,11 +472,11 @@ static void deinit(void)
 }
 
 egl_bldc_pwm_t ecd_bldc_pwm_impl =
-  {
+{
     .init        = init,
     .start       = start,
     .stop        = stop,
     .set         = set,
     .switch_wind = switch_wind,
     .deinit      = deinit
-  };
+};

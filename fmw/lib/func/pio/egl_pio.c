@@ -32,6 +32,22 @@ egl_result_t egl_pio_get(egl_pio_t *pio)
 	return pio->get();
 }
 
+egl_result_t egl_pio_toggle(egl_pio_t *pio)
+{
+	egl_result_t state = egl_pio_get(pio);
+
+	if(state == EGL_SET)
+	{
+		state = egl_pio_set(pio, false);
+	}
+	else if(state == EGL_RESET)
+	{
+		state = egl_pio_set(pio, true);
+	}
+
+	return state;
+}
+
 egl_result_t egl_pio_deinit(egl_pio_t *pio)
 {
 	if(pio->deinit != NULL)

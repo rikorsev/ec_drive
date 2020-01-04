@@ -39,6 +39,24 @@ static void calc_aprox_motor_params(uint16_t pwm)
   EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
 }
 
+static void motor_params_print(uint16_t pwm)
+{
+  int16_t load = 0;
+  uint16_t speed = 0;
+  
+  for(int i = 0; i < NUM_OF_APROXIMATIONS; i++)
+    {
+      egl_delay(ms, 100);
+
+      /* Get current motor load and speed */
+      load = egl_bldc_get_load(ecd_bldc_motor());
+      speed = egl_bldc_get_speed(ecd_bldc_motor());
+
+      EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
+    }
+}
+
+
 static void spi(void)
 {
   egl_result_t result         = EGL_SUCCESS;
@@ -82,11 +100,11 @@ static void spi(void)
     }
 }  
 
-void motor_test(void)
+void motor_test(uint16_t pwm)
 {
   egl_result_t result;
 
-  result = egl_bldc_set_power(ecd_bldc_motor(), 32);
+  result = egl_bldc_set_power(ecd_bldc_motor(), pwm);
   if(result != EGL_SUCCESS)
   {
     EGL_TRACE_ERROR("Set motor power - fail. Result: %s\r\n", EGL_RESULT());
@@ -104,7 +122,8 @@ void motor_test(void)
 
   EGL_TRACE_INFO("Motor started\r\n");
 
-  egl_delay(ms, 1000);
+  //calc_aprox_motor_params(pwm);
+  motor_params_print(pwm);
 
   result = egl_bldc_stop(ecd_bldc_motor());
   if(result != EGL_SUCCESS)
@@ -114,6 +133,34 @@ void motor_test(void)
   }
 
   EGL_TRACE_INFO("Motor stoped\r\n");
+}
+
+void motor_measure_params(egl_bldc_dir_t dir, uint16_t start_pwm, uint16_t stop_pwm, uint16_t pwm_step)
+{
+  assert(egl_bldc_start(ecd_bldc_motor()) == EGL_SUCCESS);
+
+  egl_bldc_set_dir(ecd_bldc_motor(), dir);
+
+  for(uint16_t pwm = start_pwm; pwm < stop_pwm; pwm += pwm_step)
+  {
+      assert(egl_bldc_set_power(ecd_bldc_motor(), pwm) == EGL_SUCCESS);
+      calc_aprox_motor_params(pwm);
+  }
+
+  assert(egl_bldc_stop(ecd_bldc_motor()) == EGL_SUCCESS);
+}
+
+void motor_speed_change_test(void)
+{
+  assert(egl_bldc_start(ecd_bldc_motor()) == EGL_SUCCESS);
+
+  for(uint16_t pwm = 16; pwm < 320; pwm += 16)
+  {
+      assert(egl_bldc_set_power(ecd_bldc_motor(), pwm) == EGL_SUCCESS);
+      egl_delay(ms, 50);
+  }
+
+  assert(egl_bldc_stop(ecd_bldc_motor()) == EGL_SUCCESS);  
 }
 
 int main(void)
@@ -130,18 +177,29 @@ int main(void)
 
   egl_crc_init(egl_crc16_xmodem(), 0, 0);
   egl_itf_open(ecd_spi());
-  egl_led_on(ecd_led());
+  egl_led_off(ecd_led());
   egl_pio_set(ecd_int2_pin(), true);  
 
   crc = egl_crc16_calc(egl_crc16_xmodem(), test_data, sizeof(test_data));
 
   EGL_TRACE_INFO("Test CRC16: 0x%04x\r\n", crc);
   
-  //motor_test();
+
+  egl_led_on(ecd_led());
   
+  //motor_test(16);  
+  
+  EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise\r\n");
+  motor_measure_params(EGL_BLDC_MOTOR_DIR_CW,  16, 320, 16);
+  // egl_delay(ms, 5000);
+  // EGL_TRACE_INFO(" Measure motor params. Direction: Contrclockwise\r\n");
+  // motor_measure_params(EGL_BLDC_MOTOR_DIR_CCW, 16, 320, 16);
+
+  //motor_speed_change_test();
+
   while(1)
   {
-    spi();
+    //spi();
   }
 
   return 0;
