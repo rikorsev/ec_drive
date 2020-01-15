@@ -9,6 +9,7 @@
 #include "egl_lib.h"
 #include "ecd_bsp.h"
 #include "cmd_handler.h"
+#include "monitoring.h"
 
 #define BLDC_LOAD_MAMPS_PER_DIGIT (12)
 #define NUM_OF_APROXIMATIONS      (100)
@@ -39,23 +40,32 @@ static void calc_aprox_motor_params(uint16_t pwm)
   EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
 }
 
-static void motor_params_print(uint16_t pwm)
+static void motor_params_print(uint16_t pwm, uint32_t num_of_measures, uint32_t pause)
 {
   int16_t load = 0;
   uint16_t speed = 0;
   
-  for(int i = 0; i < NUM_OF_APROXIMATIONS; i++)
-    {
-      egl_delay(ms, 100);
+  for(int i = 0; i < num_of_measures; i++)
+  {
+    egl_delay(ms, pause);
 
-      /* Get current motor load and speed */
-      load = egl_bldc_get_load(ecd_bldc_motor());
-      speed = egl_bldc_get_speed(ecd_bldc_motor());
+    /* Get current motor load and speed */
+    load = egl_bldc_get_load(ecd_bldc_motor());
+    speed = egl_bldc_get_speed(ecd_bldc_motor());
 
-      EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
-    }
+    EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
+  }
 }
 
+static void motor_load_print(uint32_t num_of_measures, uint32_t pause)
+{
+  for(int i = 0; i < num_of_measures; i++)
+  {
+    egl_delay(ms, pause);
+    int16_t load = egl_bldc_get_load(ecd_bldc_motor());
+    EGL_TRACE_INFO("%d: %d (%d mA)\r\n", i, load, convert_to_mamps(load));
+  }
+}
 
 static void spi(void)
 {
@@ -100,7 +110,7 @@ static void spi(void)
     }
 }  
 
-void motor_test(uint16_t pwm)
+void motor_test(uint16_t pwm, uint32_t num_of_measures, uint32_t pause)
 {
   egl_result_t result;
 
@@ -111,7 +121,7 @@ void motor_test(uint16_t pwm)
     return;
   }
 
-  EGL_TRACE_INFO("Motor power set\r\n");
+  EGL_TRACE_INFO("Motor power set as %d\r\n", pwm);
 
   result = egl_bldc_start(ecd_bldc_motor());
   if(result != EGL_SUCCESS)
@@ -123,7 +133,8 @@ void motor_test(uint16_t pwm)
   EGL_TRACE_INFO("Motor started\r\n");
 
   //calc_aprox_motor_params(pwm);
-  motor_params_print(pwm);
+  //motor_params_print(pwm, num_of_measures, pause);  
+  motor_load_print(num_of_measures, pause);
 
   result = egl_bldc_stop(ecd_bldc_motor());
   if(result != EGL_SUCCESS)
@@ -184,13 +195,12 @@ int main(void)
 
   EGL_TRACE_INFO("Test CRC16: 0x%04x\r\n", crc);
   
-
   egl_led_on(ecd_led());
   
-  //motor_test(16);  
+  //motor_test(160, 100, 10);  
   
-  EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise\r\n");
-  motor_measure_params(EGL_BLDC_MOTOR_DIR_CW,  16, 320, 16);
+  //EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise\r\n");
+  //motor_measure_params(EGL_BLDC_MOTOR_DIR_CW,  16, 320, 16);
   // egl_delay(ms, 5000);
   // EGL_TRACE_INFO(" Measure motor params. Direction: Contrclockwise\r\n");
   // motor_measure_params(EGL_BLDC_MOTOR_DIR_CCW, 16, 320, 16);
@@ -199,7 +209,8 @@ int main(void)
 
   while(1)
   {
-    //spi();
+    spi();
+    assert(monitoring_update() == EGL_SUCCESS);
   }
 
   return 0;

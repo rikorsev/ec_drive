@@ -45,25 +45,29 @@ typedef struct
 static uint8_t llp_in_buff_##NAME[(IN_BUFF_SIZE)] = {0};                  \
 static uint8_t llp_out_buff_##NAME[(OUT_BUFF_SIZE)] = {0};                \
 static egl_llp_t llp_##NAME =                                             \
-  {                                                                       \
-    .state         = EGL_LLP_META_STATE_ID,                               \
-    .in.data       = llp_in_buff_##NAME,                                  \
-    .out.data      = llp_out_buff_##NAME,                                 \
-    .in_buff_size  = (IN_BUFF_SIZE),                                      \
-    .out_buff_size = (OUT_BUFF_SIZE),                                     \
-    .req_map       = (MAP),                                               \
-    .req_map_len   = sizeof(MAP),                                         \
-    .count         = 0,                                                   \
-    .crc           = (CRC_FUNC)                                           \
-  };                                                                      \
+{                                                                         \
+  .state         = EGL_LLP_META_STATE_ID,                                 \
+  .in.data       = llp_in_buff_##NAME,                                    \
+  .out.data      = llp_out_buff_##NAME,                                   \
+  .in_buff_size  = (IN_BUFF_SIZE),                                        \
+  .out_buff_size = (OUT_BUFF_SIZE),                                       \
+  .req_map       = (MAP),                                                 \
+  .req_map_len   = sizeof(MAP),                                           \
+  .count         = 0,                                                     \
+  .crc           = (CRC_FUNC)                                             \
+};                                                                        \
 egl_ptc_t NAME =                                                          \
-  {                                                                       \
-    .meta   = &llp_##NAME,                                                \
-    .decode = egl_llp_decode,                                             \
-    .handle = egl_llp_handle                                              \
-  };
+{                                                                         \
+  .meta   = &llp_##NAME,                                                  \
+  .decode = egl_llp_decode,                                               \
+  .handle = egl_llp_handle,                                               \
+  .encode = egl_llp_encode,                                               \
+  .setup  = egl_llp_setup                                                 \
+};
 
 egl_result_t egl_llp_decode(void *meta, uint8_t *raw, size_t *len);
 egl_result_t egl_llp_handle(void *meta, uint8_t *out, size_t *len);
+egl_result_t egl_llp_encode(void *meta, const void *data, size_t data_size, uint8_t *out, size_t *out_size);
+egl_result_t egl_llp_setup(void *meta, const void *data, size_t len);
 
 #endif

@@ -10,9 +10,6 @@
 #define ECD_BLDC_LOAD_OFFSET            (2048)
 #define ECD_BLDC_LOAD_NUM_OF_AVAREGIN   (100)
 
-/* prototype of get function o calculate reference load */
-static int16_t get(void);
-
 static int16_t ref_load = 0;
 
 static void gpio_init(void)
@@ -54,28 +51,14 @@ static void adc_init(void)
     }  
 }
 
-static void init(void)
-{
-  gpio_init();
-  adc_init();
-  ref_load = get();
-}
-
 static void update(void)
 {
   /* Do nothing */
 }
 
-static int16_t get(void)
+static int16_t get_averege(void)
 {
   int16_t load = 0;
-
-  /* Clear other selected files */
-  ECD_BLDC_LOAD_ADC->CHSELR = 0;
-
-  /* Sample rate = 16MHz/(12.5 + 1.5) = 16MHz/14 = 1142857 SPS */
-  /* Set up BLDC LOAD MEASURMENT channel */
-  ADC_ChannelConfig(ECD_BLDC_LOAD_ADC, ADC_Channel_6, ADC_SampleTime_1_5Cycles);
   
   for(int i = 0; i < ECD_BLDC_LOAD_NUM_OF_AVAREGIN; i++)
   {
@@ -93,14 +76,43 @@ static int16_t get(void)
   return load / ECD_BLDC_LOAD_NUM_OF_AVAREGIN;
 }
 
+static int16_t get(void)
+{
+  ADC_StartOfConversion(ECD_BLDC_LOAD_ADC);
+
+  while(ADC_GetFlagStatus(ECD_BLDC_LOAD_ADC, ADC_FLAG_EOC) != SET)
+  {
+    /* wait fot the end of convertion */
+  }
+
+  return ADC_GetConversionValue(ECD_BLDC_LOAD_ADC) - ECD_BLDC_LOAD_OFFSET;
+}
+
 static void start(void)
 {
-  /* TBD */
+  /* Clear other selected files */
+  ECD_BLDC_LOAD_ADC->CHSELR = 0;
+
+  /* Sample rate = 16MHz/(12.5 + 1.5) = 16MHz/14 = 1142857 SPS */
+  /* Set up BLDC LOAD MEASURMENT channel */
+  ADC_ChannelConfig(ECD_BLDC_LOAD_ADC, ADC_Channel_6, ADC_SampleTime_1_5Cycles);
 }
 
 static void stop(void)
 {
   /* TBD */
+}
+
+static void init(void)
+{
+  gpio_init();
+  adc_init();
+
+  start();
+  ref_load = get_averege();
+  stop();
+
+  EGL_TRACE_INFO("Reference: %d\r\n", ref_load);
 }
 
 static void deinit(void)

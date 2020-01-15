@@ -192,10 +192,8 @@ egl_result_t egl_llp_decode(void *meta, uint8_t *raw, size_t *len)
   return result;
 }
 
-//static egl_result_t egl_llp_encode(void *meta, uint8_t *encoded, size_t *len);
 static egl_result_t encode(egl_llp_t *llp, uint8_t *out, size_t *len)
 {
-  //egl_llp_t *llp   = (egl_llp_pack_t *)meta;
   size_t offset    = 0;
   size_t pack_size = sizeof(llp->out.id) +
                      sizeof(llp->out.len) +
@@ -206,17 +204,17 @@ static egl_result_t encode(egl_llp_t *llp, uint8_t *out, size_t *len)
   assert(out     != NULL);
   assert(len     != NULL);
   
-    if(pack_size > *len)
-      {
-	EGL_TRACE_ERROR("Packet len %d more then buff size %d\r\n", llp->out.len, *len);
-	return EGL_OUT_OF_BOUNDARY;
-      }
+  if(pack_size > *len)
+  {
+    EGL_TRACE_ERROR("Packet len %d more then buff size %d\r\n", llp->out.len, *len);
+    return EGL_OUT_OF_BOUNDARY;
+  }
 
   if(llp->out.len > 0 && llp->out.data == NULL)
-    {
-      EGL_TRACE_ERROR("Data len is %d but data is NULL\r\n", llp->out.len);
-      return EGL_INVALID_PARAM;
-    }
+  {
+    EGL_TRACE_ERROR("Data len is %d but data is NULL\r\n", llp->out.len);
+    return EGL_INVALID_PARAM;
+  }
   
   memset(out, 0, *len);
 
@@ -271,4 +269,23 @@ egl_result_t egl_llp_handle(void *meta, uint8_t *out, size_t *len)
     }
 
   return result;
+}
+
+egl_result_t egl_llp_encode(void *meta, const void *data, size_t data_size, uint8_t *out, size_t *out_size)
+{
+  egl_llp_t *llp = (egl_llp_t *) meta;
+
+  llp->out.len  = data_size;
+  llp->out.data = (void *)data;
+
+  return encode(llp, out, out_size);
+}
+
+egl_result_t egl_llp_setup(void *meta, const void *data, size_t len)
+{
+  egl_llp_t *llp = (egl_llp_t *) meta;
+
+  llp->out.id = (uint16_t)data;
+
+  return EGL_SUCCESS;
 }

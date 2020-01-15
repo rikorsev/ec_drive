@@ -43,6 +43,7 @@ INCLUDE+=-I$(LIB_DIR)/protocol/llp
 # Application source files
 SRC_APP+=$(PROJ_ROOT)/app/main.c
 SRC_APP+=$(PROJ_ROOT)/app/cmd_handler.c
+SRC_APP+=$(PROJ_ROOT)/app/monitoring.c
 
 # BSP files
 SRC_BSP+=$(BSP_DIR)/stm32f0xx_it.c
