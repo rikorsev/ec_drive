@@ -22,17 +22,17 @@ static void deinit(void)
   CRC_DeInit();
 }
 
-static egl_crc_t ecd_crc_impl =
-  {
-    .init     = init,
-    .poly_set = NULL,
-    .calc8    = NULL,
-    .calc16   = NULL,
-    .calc32   = calc32,
-    .deinit   = deinit
-  };
-
-egl_crc_t *ecd_crc(void)
+static egl_crc_t crc_impl =
 {
-  return &ecd_crc_impl;
+  .init     = init,
+  .poly_set = NULL,
+  .calc8    = NULL,
+  .calc16   = NULL,
+  .calc32   = calc32,
+  .deinit   = deinit
+};
+
+egl_crc_t *crc(void)
+{
+  return &crc_impl;
 }

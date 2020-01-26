@@ -4,116 +4,124 @@
 #include "egl_lib.h"
 #include "ecd_bsp.h"
 
-#define ECD_BLDC_PWM_1_PORT        (GPIOA)
-#define ECD_BLDC_PWM_2_PORT        (GPIOB)
+#define PORT_1        (GPIOA)
+#define PORT_2        (GPIOB)
 
-#define ECD_BLDC_PWM_GPIO_RCC      (RCC_AHBPeriph_GPIOA | RCC_AHBPeriph_GPIOB)
-#define ECD_BLDC_PWM_TIM_RCC       (RCC_APB2Periph_TIM1)
+#define GPIO_RCC      (RCC_AHBPeriph_GPIOA | RCC_AHBPeriph_GPIOB)
+#define TIM_RCC       (RCC_APB2Periph_TIM1)
 
-#define ECD_BLDC_PWM_C1P_PIN       (GPIO_Pin_8)
-#define ECD_BLDC_PWM_C1P_AF_PIN    (GPIO_PinSource8)
+#define C1P_PIN       (GPIO_Pin_8)
+#define C1N_PIN       (GPIO_Pin_7)
+#define C2P_PIN       (GPIO_Pin_9)
+#define C2N_PIN       (GPIO_Pin_0)
+#define C3P_PIN       (GPIO_Pin_10)
+#define C3N_PIN       (GPIO_Pin_1)
 
-#define ECD_BLDC_PWM_C1N_PIN       (GPIO_Pin_7)
-#define ECD_BLDC_PWM_C1N_AF_PIN    (GPIO_PinSource7)
+#define C1P_AF_PIN    (GPIO_PinSource8)
+#define C1N_AF_PIN    (GPIO_PinSource7)
+#define C2P_AF_PIN    (GPIO_PinSource9)
+#define C2N_AF_PIN    (GPIO_PinSource0)
+#define C3P_AF_PIN    (GPIO_PinSource10)
+#define C3N_AF_PIN    (GPIO_PinSource1)
 
-#define ECD_BLDC_PWM_C2P_PIN       (GPIO_Pin_9)
-#define ECD_BLDC_PWM_C2P_AF_PIN    (GPIO_PinSource9)
 
-#define ECD_BLDC_PWM_C2N_PIN       (GPIO_Pin_0)
-#define ECD_BLDC_PWM_C2N_AF_PIN    (GPIO_PinSource0)
+#define TIMER         (TIM1)
+#define PERIOD        (320) /* To provide 50kHz PWM frequency (16MHz/50kHz = 320)*/
+#define DEADTIME      (4)
 
-#define ECD_BLDC_PWM_C3P_PIN       (GPIO_Pin_10)
-#define ECD_BLDC_PWM_C3P_AF_PIN    (GPIO_PinSource10)
+static void init_gpio(void)
+{
+  static GPIO_InitTypeDef config = 
+  {
+    .GPIO_Pin   = C1P_PIN | C1N_PIN | C2P_PIN | C3P_PIN,
+    .GPIO_Mode  = GPIO_Mode_AF,
+    .GPIO_Speed = GPIO_Speed_10MHz,
+    .GPIO_OType = GPIO_OType_PP,
+    .GPIO_PuPd  = GPIO_PuPd_NOPULL
+  };
 
-#define ECD_BLDC_PWM_C3N_PIN       (GPIO_Pin_1)
-#define ECD_BLDC_PWM_C3N_AF_PIN    (GPIO_PinSource1)
+  /* GPIOA and GPIOB clocks enable */
+  RCC_AHBPeriphClockCmd(GPIO_RCC, ENABLE);
 
-#define ECD_BLDC_PWM_TIMER         (TIM1)
-#define TIMER                      (TIM1)
-#define ECD_BLDC_PWM_PERIOD        (320) /* To provide 50kHz PWM frequency (16MHz/50kHz = 320)*/
-#define ECD_BLDC_PWM_DEADTIME      (4)
+  /* GPIOA Configuration: Channel 1, 2, 1N and 3 as alternate function push-pull */
+  GPIO_Init(PORT_1, &config);
+
+  /* GPIOB Configuration: Channel 2N and 3N as alternate function push-pull */
+  config.GPIO_Pin = C3N_PIN | C2N_PIN;
+  GPIO_Init(PORT_2, &config);
+  
+  /* Connect TIM pins to AF2 */
+  GPIO_PinAFConfig(PORT_1, C1P_AF_PIN, GPIO_AF_2);
+  GPIO_PinAFConfig(PORT_1, C1N_AF_PIN, GPIO_AF_2);
+  GPIO_PinAFConfig(PORT_1, C2P_AF_PIN, GPIO_AF_2);
+  GPIO_PinAFConfig(PORT_2, C2N_AF_PIN, GPIO_AF_2);
+  GPIO_PinAFConfig(PORT_1, C3P_AF_PIN, GPIO_AF_2);
+  GPIO_PinAFConfig(PORT_2, C3N_AF_PIN, GPIO_AF_2);
+}
+
+static void init_timer(void)
+{
+  static const TIM_TimeBaseInitTypeDef config_base =
+  {
+    .TIM_Prescaler         = 0,
+    .TIM_CounterMode       = TIM_CounterMode_Up,
+    .TIM_Period            = PERIOD,
+    .TIM_ClockDivision     = 0,
+    .TIM_RepetitionCounter = 0
+  };
+  static const TIM_OCInitTypeDef config_oc = 
+  {
+    .TIM_OCMode            = TIM_OCMode_Inactive,
+    .TIM_OutputState       = TIM_OutputState_Disable,
+    .TIM_OutputNState      = TIM_OutputNState_Disable,
+    .TIM_Pulse             = 0,
+    .TIM_OCPolarity        = TIM_OCPolarity_High,
+    .TIM_OCNPolarity       = TIM_OCNPolarity_High,
+    .TIM_OCIdleState       = TIM_OCIdleState_Reset,
+    .TIM_OCNIdleState      = TIM_OCNIdleState_Reset
+  };
+  static const TIM_BDTRInitTypeDef config_bdtr = 
+  {
+    .TIM_OSSRState         = TIM_OSSRState_Enable,
+    .TIM_OSSIState         = TIM_OSSIState_Disable,
+    .TIM_LOCKLevel         = TIM_LOCKLevel_1,
+    .TIM_DeadTime          = DEADTIME,
+    .TIM_Break             = TIM_Break_Disable,
+    .TIM_BreakPolarity     = TIM_BreakPolarity_Low,
+    .TIM_AutomaticOutput   = TIM_AutomaticOutput_Enable
+  };
+
+  /* TIM1 clock enable */
+  RCC_APB2PeriphClockCmd(TIM_RCC, ENABLE);
+
+  /* Time Base configuration. PWM Frequency 50kHz*/
+  TIM_TimeBaseInit(TIMER, (TIM_TimeBaseInitTypeDef *) &config_base);
+
+  /* Channel 1, 2,3 and 4 Configuration in PWM mode */
+  TIM_OC1Init(TIMER, (TIM_OCInitTypeDef *) &config_oc);
+  TIM_OC2Init(TIMER, (TIM_OCInitTypeDef *) &config_oc);
+  TIM_OC3Init(TIMER, (TIM_OCInitTypeDef *) &config_oc);
+  TIM_CCPreloadControl(TIMER, ENABLE);
+
+
+  /* Automatic Output enable, Break, dead time and lock configuration */
+  TIM_BDTRConfig(TIMER, (TIM_BDTRInitTypeDef *) &config_bdtr);
+
+}
 
 static void init(void)
 {
-  GPIO_InitTypeDef         gpio;
-  TIM_TimeBaseInitTypeDef  timer;
-  TIM_OCInitTypeDef        tim_oc;
-  TIM_BDTRInitTypeDef      bdtr;
-  
-  /* GPIOA and GPIOB clocks enable */
-  RCC_AHBPeriphClockCmd(ECD_BLDC_PWM_GPIO_RCC, ENABLE);
-
-  /* TIM1 clock enable */
-  RCC_APB2PeriphClockCmd(ECD_BLDC_PWM_TIM_RCC, ENABLE);
-
-    /* GPIOA Configuration: Channel 1, 2, 1N and 3 as alternate function push-pull */
-  gpio.GPIO_Pin               = ECD_BLDC_PWM_C1P_PIN | \
-                                ECD_BLDC_PWM_C1N_PIN | \
-                                ECD_BLDC_PWM_C2P_PIN | \
-                                ECD_BLDC_PWM_C3P_PIN;
-  gpio.GPIO_Mode              = GPIO_Mode_AF;
-  gpio.GPIO_Speed             = GPIO_Speed_10MHz;
-  gpio.GPIO_OType             = GPIO_OType_PP;
-  //gpio.GPIO_PuPd              = GPIO_PuPd_DOWN;
-  gpio.GPIO_PuPd              = GPIO_PuPd_NOPULL;
-  GPIO_Init(ECD_BLDC_PWM_1_PORT, &gpio);
-
-  /* GPIOB Configuration: Channel 2N and 3N as alternate function push-pull */
-  gpio.GPIO_Pin = ECD_BLDC_PWM_C3N_PIN | ECD_BLDC_PWM_C2N_PIN;
-  GPIO_Init(ECD_BLDC_PWM_2_PORT, &gpio);
-
- /* Connect TIM pins to AF2 */
-  GPIO_PinAFConfig(ECD_BLDC_PWM_1_PORT, ECD_BLDC_PWM_C1P_AF_PIN, GPIO_AF_2);
-  GPIO_PinAFConfig(ECD_BLDC_PWM_1_PORT, ECD_BLDC_PWM_C1N_AF_PIN, GPIO_AF_2);
-  GPIO_PinAFConfig(ECD_BLDC_PWM_1_PORT, ECD_BLDC_PWM_C2P_AF_PIN, GPIO_AF_2);
-  GPIO_PinAFConfig(ECD_BLDC_PWM_2_PORT, ECD_BLDC_PWM_C2N_AF_PIN, GPIO_AF_2);
-  GPIO_PinAFConfig(ECD_BLDC_PWM_1_PORT, ECD_BLDC_PWM_C3P_AF_PIN, GPIO_AF_2);
-  GPIO_PinAFConfig(ECD_BLDC_PWM_2_PORT, ECD_BLDC_PWM_C3N_AF_PIN, GPIO_AF_2);
-
-   /* Time Base configuration. PWM Frequency 50kHz*/
-  timer.TIM_Prescaler         = 0;
-  timer.TIM_CounterMode       = TIM_CounterMode_Up;
-  timer.TIM_Period            = ECD_BLDC_PWM_PERIOD;
-  timer.TIM_ClockDivision     = 0;
-  timer.TIM_RepetitionCounter = 0;
-
-  TIM_TimeBaseInit(ECD_BLDC_PWM_TIMER, &timer);
-
-  /* Channel 1, 2,3 and 4 Configuration in PWM mode */
-  tim_oc.TIM_OCMode           = TIM_OCMode_Inactive;
-  tim_oc.TIM_OutputState      = TIM_OutputState_Disable;
-  tim_oc.TIM_OutputNState     = TIM_OutputNState_Disable;
-  tim_oc.TIM_Pulse            = 0;
-  tim_oc.TIM_OCPolarity       = TIM_OCPolarity_High;
-  tim_oc.TIM_OCNPolarity      = TIM_OCNPolarity_High;
-  tim_oc.TIM_OCIdleState      = TIM_OCIdleState_Reset;
-  tim_oc.TIM_OCNIdleState     = TIM_OCNIdleState_Reset;
-
-  TIM_OC1Init(ECD_BLDC_PWM_TIMER, &tim_oc);
-  TIM_OC2Init(ECD_BLDC_PWM_TIMER, &tim_oc);
-  TIM_OC3Init(ECD_BLDC_PWM_TIMER, &tim_oc);
-
-  /* Automatic Output enable, Break, dead time and lock configuration */
-  bdtr.TIM_OSSRState          = TIM_OSSRState_Enable;
-  bdtr.TIM_OSSIState          = TIM_OSSIState_Disable;
-  bdtr.TIM_LOCKLevel          = TIM_LOCKLevel_1;
-  bdtr.TIM_DeadTime           = ECD_BLDC_PWM_DEADTIME;
-  bdtr.TIM_Break              = TIM_Break_Disable;
-  bdtr.TIM_BreakPolarity      = TIM_BreakPolarity_Low;
-  bdtr.TIM_AutomaticOutput    = TIM_AutomaticOutput_Enable;
-
-  TIM_BDTRConfig(ECD_BLDC_PWM_TIMER, &bdtr);
-
-  TIM_CCPreloadControl(ECD_BLDC_PWM_TIMER, ENABLE);
+  init_gpio();
+  init_timer();
 } 
 
 static egl_result_t start(void)
 {
   /* TIM1 counter enable */
-  TIM_Cmd(ECD_BLDC_PWM_TIMER, ENABLE);
+  TIM_Cmd(TIMER, ENABLE);
 
   /* Main Output Enable */
-  TIM_CtrlPWMOutputs(ECD_BLDC_PWM_TIMER, ENABLE);
+  TIM_CtrlPWMOutputs(TIMER, ENABLE);
   
   return EGL_SUCCESS;
 }
@@ -121,24 +129,24 @@ static egl_result_t start(void)
 static egl_result_t stop(void)
 {
   /* TIM1 counter disable */
-  TIM_Cmd(ECD_BLDC_PWM_TIMER, DISABLE);
+  TIM_Cmd(TIMER, DISABLE);
 
   /* Main Output disable */
-  TIM_CtrlPWMOutputs(ECD_BLDC_PWM_TIMER, DISABLE);
+  TIM_CtrlPWMOutputs(TIMER, DISABLE);
  
   return EGL_SUCCESS;
 }
 
 static egl_result_t set(uint16_t power)
 {
-  if( ECD_BLDC_PWM_PERIOD < power)
-    {
-      return EGL_OUT_OF_BOUNDARY;
-    }
+  if( PERIOD < power )
+  {
+    return EGL_OUT_OF_BOUNDARY;
+  }
   
-  TIM_SetCompare1(ECD_BLDC_PWM_TIMER, power);
-  TIM_SetCompare2(ECD_BLDC_PWM_TIMER, power);
-  TIM_SetCompare3(ECD_BLDC_PWM_TIMER, power);
+  TIM_SetCompare1(TIMER, power);
+  TIM_SetCompare2(TIMER, power);
+  TIM_SetCompare3(TIMER, power);
 
   return EGL_SUCCESS;
 }
@@ -471,12 +479,12 @@ static void deinit(void)
   /* TBD */
 }
 
-egl_bldc_pwm_t ecd_bldc_pwm_impl =
+const egl_bldc_pwm_t pwm_impl =
 {
-    .init        = init,
-    .start       = start,
-    .stop        = stop,
-    .set         = set,
-    .switch_wind = switch_wind,
-    .deinit      = deinit
+  .init        = init,
+  .start       = start,
+  .stop        = stop,
+  .set         = set,
+  .switch_wind = switch_wind,
+  .deinit      = deinit
 };
