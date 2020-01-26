@@ -17,7 +17,7 @@ static egl_result_t cmd_motor_start(const void *in, size_t len_in, void *out, si
   
   EGL_TRACE_INFO("Motor start\r\n");
   
-  result = egl_bldc_start(ecd_bldc_motor());
+  result = egl_bldc_start(motor());
   if(result != EGL_SUCCESS)
   {
     EGL_TRACE_INFO("Motor start - fail\r\n");
@@ -32,7 +32,7 @@ static egl_result_t cmd_motor_stop(const void *in, size_t len_in, void *out, siz
   
   EGL_TRACE_INFO("Motor stop\r\n");
   
-  result = egl_bldc_stop(ecd_bldc_motor());  
+  result = egl_bldc_stop(motor());  
   if(result != EGL_SUCCESS)
   {
     EGL_TRACE_INFO("Motor stop - fail\r\n");
@@ -53,7 +53,7 @@ static egl_result_t cmd_motor_power_set(const void *in, size_t len_in, void *out
   
   EGL_TRACE_INFO("Motor set speed %d\r\n", speed);
 
-  result = egl_bldc_set_power(ecd_bldc_motor(), motor_power_convert(speed));
+  result = egl_bldc_set_power(motor(), motor_power_convert(speed));
 
   return result;
 }

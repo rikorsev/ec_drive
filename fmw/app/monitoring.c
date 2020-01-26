@@ -65,7 +65,7 @@ static egl_result_t send(uint8_t *out)
     egl_result_t result   = EGL_SUCCESS;
 
     /* send monitoring data troug spi */
-    result = egl_itf_write(ecd_spi(), out, &write_len);
+    result = egl_itf_write(spi(), out, &write_len);
     if(result != EGL_SUCCESS)
     {
         EGL_TRACE_ERROR("Data send - fail. Result %s\r\n", EGL_RESULT());
@@ -93,8 +93,8 @@ egl_result_t monitoring_update(void)
         monitor_entry_t data = 
         {
             .timestamp = current_timestamp,
-            .load      = egl_bldc_get_load(ecd_bldc_motor()),
-            .speed     = egl_bldc_get_speed(ecd_bldc_motor())
+            .load      = egl_bldc_get_load(motor()),
+            .speed     = egl_bldc_get_speed(motor())
         };
 
         EGL_TRACE_INFO("Monitoring\r\n");

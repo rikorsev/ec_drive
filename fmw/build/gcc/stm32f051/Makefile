@@ -16,14 +16,13 @@ LIB_DIR=$(PROJ_ROOT)/lib
 PERIPH_DIR=$(PROJ_ROOT)/bsp/stm32/stm32f05x/STM32F0xx_StdPeriph_Lib_V1.5.0
 PERIPH_SRC_DIR=$(PERIPH_DIR)/Libraries/STM32F0xx_StdPeriph_Driver/src
 PERIPH_CMSIS_DIR=$(PERIPH_DIR)/Libraries/CMSIS
-BSP_DIR=$(PROJ_ROOT)/bsp/stm32/stm32f05x/ec_drive_v2_board
+BSP_DIR=$(PROJ_ROOT)/bsp/stm32/stm32f05x/ecd
 
 # Include pathes
 INCLUDE+=-I$(PROJ_ROOT)/app
 INCLUDE+=-I$(PERIPH_DIR)/Libraries/STM32F0xx_StdPeriph_Driver/inc
 INCLUDE+=-I$(PERIPH_CMSIS_DIR)/Include
 INCLUDE+=-I$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Include
-INCLUDE+=-I$(PROJ_ROOT)/bsp/stm32/stm32f05x/ec_drive_v2_board
 INCLUDE+=-I$(BSP_DIR)
 INCLUDE+=-I$(LIB_DIR)
 INCLUDE+=-I$(LIB_DIR)/abst/ringbuffer
@@ -47,22 +46,21 @@ SRC_APP+=$(PROJ_ROOT)/app/monitoring.c
 
 # BSP files
 SRC_BSP+=$(BSP_DIR)/stm32f0xx_it.c
-SRC_BSP+=$(BSP_DIR)/led/ecd_led.c
-SRC_BSP+=$(BSP_DIR)/runtime/ecd_runtime.c
-SRC_BSP+=$(BSP_DIR)/clock/ecd_clock.c
-SRC_BSP+=$(BSP_DIR)/main_timer/ecd_main_timer.c
-SRC_BSP+=$(BSP_DIR)/dbg_uart/ecd_dbg_uart.c
-SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_hall.c
-SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_pwm.c
-SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_load.c
-SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc_speed.c
-SRC_BSP+=$(BSP_DIR)/bldc/ecd_bldc.c
-SRC_BSP+=$(BSP_DIR)/ecd_bsp.c
-SRC_BSP+=$(BSP_DIR)/man_ctl/ecd_man_ctl.c
-SRC_BSP+=$(BSP_DIR)/spi/ecd_spi.c
-SRC_BSP+=$(BSP_DIR)/crc/ecd_crc.c
-SRC_BSP+=$(BSP_DIR)/int_pin/ecd_int_pin.c
-SRC_BSP+=$(BSP_DIR)/int2_pin/ecd_int2_pin.c
+SRC_BSP+=$(BSP_DIR)/led/led.c
+SRC_BSP+=$(BSP_DIR)/runtime/runtime.c
+SRC_BSP+=$(BSP_DIR)/clock/clock.c
+SRC_BSP+=$(BSP_DIR)/main_timer/main_timer.c
+SRC_BSP+=$(BSP_DIR)/dbg/dbg.c
+SRC_BSP+=$(BSP_DIR)/motor/hall.c
+SRC_BSP+=$(BSP_DIR)/motor/pwm.c
+SRC_BSP+=$(BSP_DIR)/motor/load.c
+SRC_BSP+=$(BSP_DIR)/motor/speed.c
+SRC_BSP+=$(BSP_DIR)/motor/motor.c
+SRC_BSP+=$(BSP_DIR)/man_ctl/man_ctl.c
+SRC_BSP+=$(BSP_DIR)/spi/spi.c
+SRC_BSP+=$(BSP_DIR)/crc/crc.c
+SRC_BSP+=$(BSP_DIR)/int1/int1.c
+SRC_BSP+=$(BSP_DIR)/int2/int2.c
 
 # Peripheral library files
 SRC_PERIPH+=$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c
@@ -105,7 +103,6 @@ SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_xmodem.c
 SRC_LIB+=$(LIB_DIR)/func/pio/egl_pio.c
 SRC_LIB+=$(LIB_DIR)/protocol/egl_protocol.c
 SRC_LIB+=$(LIB_DIR)/protocol/llp/egl_llp.c
-
 
 SRC+=$(SRC_PERIPH)
 SRC+=$(SRC_APP)
