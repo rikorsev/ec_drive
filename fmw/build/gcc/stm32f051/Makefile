@@ -7,6 +7,7 @@ STFLASH=st-flash
 OPENOCD=openocd
 GDB=gdb-multiarch
 REMOTE=pi
+IP=192.168.0.110
 
 # Pathes
 OBJ_DIR=./obj
@@ -197,8 +198,8 @@ debug: $(TARGET)
 	pkill xterm
 
 debug_remote: $(TARGET)
-	setsid xterm -e 'bash -c "ssh pi $(OPENOCD) -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg -f ecd_openocd.cfg"' >/dev/null 2>&1 < /dev/null &
-	$(GDB) -ex "target remote 192.168.0.162:3333" -ex "b main" -ex "monitor reset halt" -ex "c" $(TARGET)
+	setsid xterm -e 'bash -c "ssh $(REMOTE) $(OPENOCD) -f interface/stlink-v2-1.cfg -f target/stm32f0x.cfg -f ecd_openocd.cfg"' >/dev/null 2>&1 < /dev/null &
+	$(GDB) -ex "target remote $(IP):3333" -ex "b main" -ex "monitor reset halt" -ex "c" $(TARGET)
 	ssh $(REMOTE) pkill $(OPENOCD)
 	pkill xterm
 
