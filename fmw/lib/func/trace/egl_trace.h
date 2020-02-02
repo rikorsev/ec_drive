@@ -21,7 +21,9 @@ typedef enum
 #define EGL_TRACE_ERROR(fmt, ...) egl_trace(EGL_TRACE_LEVEL_ERROR, EGL_MODULE_NAME, fmt, ##__VA_ARGS__)
 #define EGL_TRACE_FAIL(fmt, ...)  egl_trace(EGL_TRACE_LEVEL_FAIL,  EGL_MODULE_NAME, fmt, ##__VA_ARGS__)
 
-void egl_trace_init (egl_trace_level_t lvl, egl_counter_t* tstamp, char** filtr, size_t num);
-void egl_trace      (egl_trace_level_t lvl, char* module, char* format, ...);
+void egl_trace_init   (egl_trace_level_t lvl, egl_counter_t* tstamp, char** filtr, size_t num);
+void egl_trace_enable (void);
+void egl_trace_disable(void);
+void egl_trace        (egl_trace_level_t lvl, char* module, char* format, ...);
 
 #endif //EGL_TRACE_H

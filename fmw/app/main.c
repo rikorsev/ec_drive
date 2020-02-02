@@ -99,7 +99,7 @@ static void spi_handler(void)
     EGL_TRACE_ERROR("SPI: read fail. Result: %s\r\n", EGL_RESULT());
     return;
   }
-
+  
   if(read_len > 0)
   {
     EGL_TRACE_INFO("SPI: got %d\r\n", read_len);
@@ -108,12 +108,16 @@ static void spi_handler(void)
       EGL_TRACE_INFO("0x%02x\r\n", buff_in[i]);
     }
 
+    egl_pio_set(int2(), true);  
+
     result = egl_ptc_decode(spi_llp(), buff_in, &read_len, buff_out, &write_len);
     if(result != EGL_SUCCESS && result != EGL_PROCESS)
     {
       EGL_TRACE_INFO("SPI: decode fail. Result: %s\r\n", EGL_RESULT());
       return;
     }
+  
+    egl_pio_set(int2(), false); 
 
     EGL_TRACE_INFO("SPI: send %d\r\n", write_len);
       
@@ -207,7 +211,6 @@ int main(void)
   egl_crc_init(egl_crc16_xmodem(), 0, 0);
   egl_itf_open(spi());
   egl_led_off(led());
-  egl_pio_set(int2(), true);  
 
   crc = egl_crc16_calc(egl_crc16_xmodem(), test_data, sizeof(test_data));
 
@@ -215,7 +218,11 @@ int main(void)
   
   egl_led_on(led());
   
-  //motor_test(160, 100, 10);  
+  /* Disable traceing */
+  egl_trace_disable();
+
+
+  //motor_test(32, 100, 10);  
   
   //EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise\r\n");
   //motor_measure_params(EGL_BLDC_MOTOR_DIR_CW,  16, 320, 16);
