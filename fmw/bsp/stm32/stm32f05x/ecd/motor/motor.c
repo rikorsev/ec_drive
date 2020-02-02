@@ -5,7 +5,7 @@ extern egl_bldc_pwm_t         pwm_impl;
 extern egl_bldc_load_t        load_impl;
 extern egl_bldc_speed_meas_t  speed_impl;
 
-static const egl_bldc_t bldc_motor_impl =
+static egl_bldc_t bldc_motor_impl =
 {
   .pwm   = &pwm_impl,
   .hall  = &hall_impl,
