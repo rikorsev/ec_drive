@@ -13,9 +13,6 @@
 
 #define MAMPS_PER_DIGIT           (12)
 #define NUM_OF_APROXIMATIONS      (100)
-#define CRC_EXPECTED              (0xD71C)
-#define CRC_POLY                  (0x1021)
-#define CRC_START_VAL             (0xFFFF)
 
 static void board_init(void)
 {
@@ -28,7 +25,6 @@ static void board_init(void)
   egl_itf_init    (man_ctl());
   egl_itf_init    (spi());
   egl_bldc_init   (motor());
-  egl_crc_init    (crc(), CRC_POLY, CRC_START_VAL);
   egl_pio_init    (int1());
   egl_pio_init    (int2());
 }
@@ -108,8 +104,6 @@ static void spi_handler(void)
       EGL_TRACE_INFO("0x%02x\r\n", buff_in[i]);
     }
 
-    egl_pio_set(int2(), true);  
-
     result = egl_ptc_decode(spi_llp(), buff_in, &read_len, buff_out, &write_len);
     if(result != EGL_SUCCESS && result != EGL_PROCESS)
     {
@@ -117,8 +111,6 @@ static void spi_handler(void)
       return;
     }
   
-    egl_pio_set(int2(), false); 
-
     EGL_TRACE_INFO("SPI: send %d\r\n", write_len);
       
     result = egl_itf_write(spi(), buff_out, &write_len);
@@ -198,9 +190,6 @@ void motor_speed_change_test(void)
 
 int main(void)
 {
-  uint8_t test_data[] = {0x01, 0xC0, 0x00, 0x00};
-  uint16_t crc = 0;
-
   board_init();
 
   egl_itf_open(dbg());
@@ -208,20 +197,11 @@ int main(void)
   
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
-  egl_crc_init(egl_crc16_xmodem(), 0, 0);
   egl_itf_open(spi());
   egl_led_off(led());
-
-  crc = egl_crc16_calc(egl_crc16_xmodem(), test_data, sizeof(test_data));
-
-  EGL_TRACE_INFO("Test CRC16: 0x%04x\r\n", crc);
   
   egl_led_on(led());
   
-  /* Disable traceing */
-  egl_trace_disable();
-
-
   //motor_test(32, 100, 10);  
   
   //EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise\r\n");

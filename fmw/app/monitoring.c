@@ -35,7 +35,7 @@ static egl_result_t encode(monitor_entry_t *data, uint8_t *out)
     size_t out_len = OUT_LEN;
 
     /* setup protocol to encode data with command ID 0xC006 */
-    result = egl_ptc_setup(spi_llp(), (void *)0xC006, 2);
+    result = egl_ptc_setup(spi_llp(), CMD_MODITORING_DATA_ID, sizeof(CMD_MODITORING_DATA_ID));
     if(result != EGL_SUCCESS)
     {
         EGL_TRACE_ERROR("Protocol setup - fail. Result %s\r\n", EGL_RESULT());

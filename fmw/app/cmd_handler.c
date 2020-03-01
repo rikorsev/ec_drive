@@ -11,6 +11,18 @@
 
 #define SPI_LLP_BUFF_SIZE (64)
 
+static egl_crc_t crc_in = 
+{
+  .start_val = 0,
+  .calc16    = egl_crc16_xmodem_calc
+};
+
+static egl_crc_t crc_out = 
+{
+  .start_val = 0,
+  .calc16    = egl_crc16_xmodem_calc
+};
+
 static egl_result_t cmd_motor_start(const void *in, size_t len_in, void *out, size_t *len_out)
 {
   egl_result_t result = EGL_SUCCESS;
@@ -91,6 +103,20 @@ static egl_result_t cmd_test(const void *in, size_t len_in, void *out, size_t *l
   return EGL_SUCCESS;
 }
 
+static egl_result_t cmd_enable_trace(const void *in, size_t len_in, void *out, size_t *len_out)
+{
+  egl_trace_enable();
+
+  return EGL_SUCCESS;
+}
+
+static egl_result_t cmd_disable_trace(const void *in, size_t len_in, void *out, size_t *len_out)
+{
+  egl_trace_disable();
+
+  return EGL_SUCCESS;
+}
+
 static const egl_llp_req_t cmd_map[] =
 {
   { .id = CMD_MOTOR_START_ID,      .handler = cmd_motor_start         },
@@ -98,10 +124,12 @@ static const egl_llp_req_t cmd_map[] =
   { .id = CMD_MOTOR_SET_POWER_ID,  .handler = cmd_motor_power_set     },
   { .id = CMD_MONITORING_START_ID, .handler = cmd_monitoring_start    },
   { .id = CMD_MONITORING_STOP_ID,  .handler = cmd_monitoring_stop     },
+  { .id = CMD_ENABLE_TRACE_ID,     .handler = cmd_enable_trace        },
+  { .id = CMD_DISABLE_TRACE_ID,    .handler = cmd_disable_trace       },
   { .id = CMD_TEST_ID,             .handler = cmd_test                }
 };
 
-EGL_LLP_DECLARE(spi_llp_impl, cmd_map, egl_crc16_xmodem, SPI_LLP_BUFF_SIZE, SPI_LLP_BUFF_SIZE);
+EGL_LLP_DECLARE(spi_llp_impl, cmd_map, &crc_in, &crc_out, SPI_LLP_BUFF_SIZE, SPI_LLP_BUFF_SIZE);
 
 egl_ptc_t* spi_llp(void)
 {

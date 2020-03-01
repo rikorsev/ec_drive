@@ -9,9 +9,9 @@ void egl_crc_init(egl_crc_t *crc, uint32_t poly, uint32_t start_val)
   assert(crc != NULL);
 
   if(crc->init != NULL)
-    {
-      crc->init();
-    }
+  {
+    crc->init();
+  }
 
   crc->start_val = start_val;
   egl_crc_poly_set(crc, poly);
@@ -23,9 +23,9 @@ void egl_crc_poly_set(egl_crc_t *crc, uint32_t poly)
   assert(crc != NULL);
 
   if(crc->poly_set != NULL)
-    {
-      crc->poly_set(poly);
-    }
+  {
+    crc->poly_set(poly);
+  }
 }
 
 void egl_crc_reset(egl_crc_t *crc)
@@ -68,7 +68,7 @@ void egl_crc_deinit(egl_crc_t *crc)
   assert(crc           != NULL);
 
   if(crc->deinit != NULL)
-    {
-      crc->deinit();
-    }
+  {
+    crc->deinit();
+  }
 }
