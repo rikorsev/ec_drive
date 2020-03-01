@@ -27,8 +27,12 @@
 #define CLOCK_DMA    (RCC_AHBPeriph_DMA1)
 #define IRQ          (DMA1_Channel2_3_IRQn)
 
-static uint8_t tx_buff[BUFF_SIZE] = {0};
-static uint8_t rx_buff[BUFF_SIZE] = {0};
+//static uint8_t tx_buff[BUFF_SIZE] = {0};
+//static uint8_t rx_buff[BUFF_SIZE] = {0};
+
+/* declare ring buffers */
+EGL_DECLARE_RINGBUF(tx_rbuff, BUFF_SIZE);
+EGL_DECLARE_RINGBUF(rx_rbuff, BUFF_SIZE);
 
 static void gpio_init(void)
 {
@@ -95,7 +99,7 @@ static void nvic_init(void)
   NVIC_Init( (NVIC_InitTypeDef *) &config);
 }
 
-static void setup_dma_read(size_t offset)
+static void setup_dma_read(void *data, size_t len)
 {
   /* config dma rx channel */
   static DMA_InitTypeDef config = 
@@ -111,9 +115,14 @@ static void setup_dma_read(size_t offset)
     .DMA_M2M                = DMA_M2M_Disable,
   };  
 
+  EGL_TRACE_DEBUG("DMA reserved len: %d\r\n", len);
+
+  /* check if dma is not in error state */
+  assert(DMA_GetFlagStatus(DMA1_FLAG_TE2) == RESET);
+
   /* Set up buffer to transmission */
-  config.DMA_MemoryBaseAddr = (uint32_t)rx_buff + offset;
-  config.DMA_BufferSize     = BUFF_SIZE - offset;
+  config.DMA_MemoryBaseAddr = (uint32_t)data;
+  config.DMA_BufferSize     = len;
 
   DMA_Cmd(DMA_RX, DISABLE);
   DMA_Init(DMA_RX, &config);
@@ -126,7 +135,6 @@ void dma_init(void)
 
   /* Enable DMA SPI TX Transfer complete interrupt */
   DMA_ITConfig(DMA_TX, DMA_IT_TC, ENABLE);
-
 }
 
 static void init(void)
@@ -142,18 +150,18 @@ static egl_result_t open(void)
   SPI_Cmd(SPI, ENABLE);
 
   /* start reading data trough dma */
-  setup_dma_read(0);
+  setup_dma_read(egl_ringbuf_get_in_ptr(&rx_rbuff),
+                 egl_ringbuf_get_cont_free_size(&rx_rbuff));
 
   return EGL_SUCCESS;
 }
 
-static size_t write(void* data, size_t len)
+static void setup_dma_write(void* data, size_t len)
 {
   /* config dma tx channel */
   static DMA_InitTypeDef config = 
   {
     .DMA_PeripheralBaseAddr = (uint32_t)(&SPI->DR),
-    .DMA_MemoryBaseAddr     = (uint32_t)tx_buff,
     .DMA_DIR                = DMA_DIR_PeripheralDST,
     .DMA_PeripheralInc      = DMA_PeripheralInc_Disable,
     .DMA_MemoryInc          = DMA_MemoryInc_Enable,
@@ -164,22 +172,29 @@ static size_t write(void* data, size_t len)
     .DMA_M2M                = DMA_M2M_Disable,
   };
 
-  /* check if dma in error state */
-  assert(DMA_GetFlagStatus(DMA1_FLAG_TE3) == RESET);
+  assert(data);
 
-  /* check if data length less then buffer */
-  if(len > BUFF_SIZE)
+  if( len > 0 )
   {
-    len = BUFF_SIZE;
-  }
-  
-  /* copy data to buffer */
-  memcpy(tx_buff, data, len);
+    /* check if dma in error state */
+    assert(DMA_GetFlagStatus(DMA1_FLAG_TE3) == RESET);
 
-  /* Set up dma transmission */
-  config.DMA_BufferSize = len;
-  DMA_Init(DMA_TX, &config);
-  DMA_Cmd(DMA_TX, ENABLE);
+    /* Set up dma transmission */
+    config.DMA_MemoryBaseAddr = (uint32_t)data;
+    config.DMA_BufferSize     = len;
+
+    /* Start dma transmission */
+    DMA_Init(DMA_TX, &config);
+    DMA_Cmd(DMA_TX, ENABLE);
+  }
+}
+
+static size_t write(void* data, size_t len)
+{
+  len = egl_ringbuf_write(&tx_rbuff, data, len);
+
+  setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff),
+                  egl_ringbuf_get_cont_full_size(&tx_rbuff)); 
 
   /* Notify that board has new data */
   egl_pio_set(int1(), true);  
@@ -187,54 +202,138 @@ static size_t write(void* data, size_t len)
   return len;
 }
 
+// static size_t write(void* data, size_t len)
+// {
+//   /* config dma tx channel */
+//   static DMA_InitTypeDef config = 
+//   {
+//     .DMA_PeripheralBaseAddr = (uint32_t)(&SPI->DR),
+//     .DMA_MemoryBaseAddr     = (uint32_t)tx_buff,
+//     .DMA_DIR                = DMA_DIR_PeripheralDST,
+//     .DMA_PeripheralInc      = DMA_PeripheralInc_Disable,
+//     .DMA_MemoryInc          = DMA_MemoryInc_Enable,
+//     .DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte,
+//     .DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte,
+//     .DMA_Mode               = DMA_Mode_Normal,
+//     .DMA_Priority           = DMA_Priority_VeryHigh,
+//     .DMA_M2M                = DMA_M2M_Disable,
+//   };
+
+//   /* check if dma in error state */
+//   assert(DMA_GetFlagStatus(DMA1_FLAG_TE3) == RESET);
+
+//   /* check if data length less then buffer */
+//   if(len > BUFF_SIZE)
+//   {
+//     len = BUFF_SIZE;
+//   }
+  
+//   /* copy data to buffer */
+//   memcpy(tx_buff, data, len);
+
+//   /* Set up dma transmission */
+//   config.DMA_BufferSize = len;
+//   DMA_Init(DMA_TX, &config);
+//   DMA_Cmd(DMA_TX, ENABLE);
+
+//   /* Notify that board has new data */
+//   egl_pio_set(int1(), true);  
+
+//   return len;
+// }
+
 static size_t read(void* data, size_t len)
 {
-  uint16_t current_read      = 0;
-  static size_t read_in_idx  = 0; /* index of last recived data in buffer */
-  static size_t read_out_idx = 0; /* index of last read data in buffer */
+  /* Get amount of bytes that came to buffer */ 
+  uint16_t counter = DMA_GetCurrDataCounter(DMA_RX);
+  size_t free      = egl_ringbuf_get_free_size(&rx_rbuff);
+  size_t recived   = 0;
   
-  /* 
-    check CS pin, if it is in low state then transmission in process
-    and we should try to read data laiter 
-  */
-  if(GPIO_ReadInputDataBit(PORT2, CS) == false)
+  if(free < counter)
   {
-    return 0;
+    printf("free: %d, count: %d\r\n", free, counter);
   }
 
-  /* Get amount of bytes that came to buffer */  
-  current_read = BUFF_SIZE - DMA_GetCurrDataCounter(DMA_RX);
+  /* Check that we got from DMA not more then free buffer size */
+  assert(free >= counter);
 
-  read_in_idx += current_read;
+  /* Calculate how many bytes we have revived fromm DMA */
+  recived = free - counter;
 
-  /* check if in index not out of boundary */
-  assert(read_in_idx < BUFF_SIZE);
-
-  /* truncate length if it is greater then buffer has */
-  if(read_in_idx < len + read_out_idx)
+  /* truncate len */
+  if(len > recived)
   {
-    len = read_in_idx - read_out_idx;
+    len = recived;
   }
 
-  /* copy data */
-  memcpy(data, rx_buff + read_out_idx, len);
-  read_out_idx += len;
+  /* Mark it as writen data */
+  egl_ringbuf_reserve_for_write(&rx_rbuff, recived);
 
-  /* if all data in buffer has been read, then reset indexes */
-  if(read_out_idx >= read_in_idx)
+  /* If come data has been read trough dma, restart dma reading once again */
+  if(len > 0)
   {
-    read_in_idx = 0;
-    read_out_idx = 0;
-  }
+    EGL_TRACE_DEBUG("ctn: %d, free: %d, rec: %d, len %d\r\n", counter, free, recived, len);
 
-  /* if come data has been read trough dma, restart dma reading once again */
-  if(current_read > 0)
-  {
-    setup_dma_read(read_in_idx);  
+    setup_dma_read(egl_ringbuf_get_in_ptr(&rx_rbuff),
+                   egl_ringbuf_get_cont_free_size(&rx_rbuff));
+
+    /* Then read data from buffer */
+    len = egl_ringbuf_read(&rx_rbuff, data, len);
+
+    EGL_TRACE_DEBUG("Len after read from buffer: %d\r\n", len);
   }
 
   return len;
 }
+
+// static size_t read(void* data, size_t len)
+// {
+//   uint16_t current_read      = 0;
+//   static size_t read_in_idx  = 0; /* index of last recived data in buffer */
+//   static size_t read_out_idx = 0; /* index of last read data in buffer */
+  
+//   /* 
+//     check CS pin, if it is in low state then transmission in process
+//     and we should try to read data laiter 
+//   */
+//   if(GPIO_ReadInputDataBit(PORT2, CS) == false)
+//   {
+//     return 0;
+//   }
+
+//   /* Get amount of bytes that came to buffer */  
+//   current_read = BUFF_SIZE - DMA_GetCurrDataCounter(DMA_RX);
+
+//   read_in_idx += current_read;
+
+//    check if in index not out of boundary 
+//   assert(read_in_idx < BUFF_SIZE);
+
+//   /* truncate length if it is greater then buffer has */
+//   if(read_in_idx < len + read_out_idx)
+//   {
+//     len = read_in_idx - read_out_idx;
+//   }
+
+//   /* copy data */
+//   memcpy(data, rx_buff + read_out_idx, len);
+//   read_out_idx += len;
+
+//   /* if all data in buffer has been read, then reset indexes */
+//   if(read_out_idx >= read_in_idx)
+//   {
+//     read_in_idx = 0;
+//     read_out_idx = 0;
+//   }
+
+//   /* if come data has been read trough dma, restart dma reading once again */
+//   if(current_read > 0)
+//   {
+//     setup_dma_read(read_in_idx);  
+//   }
+
+//   return len;
+// }
 
 static egl_result_t close(void)
 {
@@ -247,7 +346,21 @@ static egl_result_t close(void)
 
 void spi_irq(void)
 {
-  egl_pio_set(int1(), false);
+  size_t write_len = egl_ringbuf_get_cont_full_size(&tx_rbuff);
+  
+  EGL_TRACE_DEBUG("Write len: %d\r\n", write_len);
+  /* If we have something more to transmit,
+     Thent setup new DMA transfer to write */
+  if(write_len > 0)
+  {
+    setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), write_len);
+  }
+  /* Else notify that transmission has been finished */
+  else
+  {
+    egl_pio_set(int1(), false);
+  }
+
   DMA_ClearITPendingBit(DMA1_IT_TC3);
   DMA_Cmd(DMA_TX, DISABLE);
 }

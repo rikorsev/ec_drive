@@ -1,7 +1,7 @@
 #ifndef EGL_LIB_H
 #define EGL_LIB_H
 
-#include "abst/ringbuffer/ringbuffer.h"
+#include "abst/ringbuffer/egl_ringbuf.h"
 #include "abst/result/egl_result.h"
 #include "func/trace/egl_trace.h"
 #include "func/count/egl_counter.h"

@@ -90,7 +90,7 @@ SRC_PERIPH+=$(PERIPH_SRC_DIR)/stm32f0xx_rtc.c
 SRC_PERIPH+=$(PERIPH_SRC_DIR)/stm32f0xx_tim.c
 
 # Embedded General Libary source
-SRC_LIB+=$(LIB_DIR)/abst/ringbuffer/ringbuffer.c
+SRC_LIB+=$(LIB_DIR)/abst/ringbuffer/egl_ringbuf.c
 SRC_LIB+=$(LIB_DIR)/abst/result/egl_result.c
 SRC_LIB+=$(LIB_DIR)/func/led/egl_led.c
 SRC_LIB+=$(LIB_DIR)/func/count/egl_counter.c

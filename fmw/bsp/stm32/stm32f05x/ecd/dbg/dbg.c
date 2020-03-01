@@ -14,7 +14,7 @@
 #define CLOCK_UART     (RCC_APB1Periph_USART2)
 #define IRQ_PRIORITY   (1)
 
-DECLARE_RING_BUFFER(tx_buff, BUFF_SIZE);
+EGL_DECLARE_RINGBUF(tx_buff, BUFF_SIZE);
 
 static void init_gpio(void)
 {
@@ -100,9 +100,9 @@ static size_t write_polling(void* buff, size_t len)
   uint8_t data = 0;
 
   /* flush data from ringbuffer if any */
-  while(ring_buffer_get_full_size(&tx_buff) > 0)
+  while(egl_ringbuf_get_full_size(&tx_buff) > 0)
   {
-    (void)ring_buffer_read(&tx_buff, &data, 1);
+    (void)egl_ringbuf_read(&tx_buff, &data, 1);
 
     while(USART_GetFlagStatus(USART, USART_FLAG_TXE) != SET)
     {
@@ -128,7 +128,7 @@ static size_t write_polling(void* buff, size_t len)
 
 static size_t write_interrupt(void* buff, size_t len)
 {
-  len = ring_buffer_write(&tx_buff, buff, len);
+  len = egl_ringbuf_write(&tx_buff, buff, len);
   
   if(USART_GetFlagStatus(USART, USART_FLAG_TC) == SET)
   {
@@ -182,9 +182,9 @@ void dbg_irq(void)
   uint8_t data = 0;
 
   /* if ringbuffer not empty */ 
-  if(ring_buffer_get_full_size(&tx_buff) > 0)
+  if(egl_ringbuf_get_full_size(&tx_buff) > 0)
   {
-    (void)ring_buffer_read(&tx_buff, &data, 1);
+    (void)egl_ringbuf_read(&tx_buff, &data, 1);
     USART_SendData(USART, (uint16_t)data);
   }
   else
