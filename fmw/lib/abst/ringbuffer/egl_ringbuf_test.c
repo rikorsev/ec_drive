@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "egl_ringbuf.h"
 #include "unity.h"
 
@@ -144,8 +146,8 @@ void test_write_two_messages_read_one_id006(void)
     uint8_t data_in_1[]  = {0, 1, 2, 3};
     uint8_t data_in_2[]  = {4, 5, 6, 7, 8, 9, 10, 11};
     uint8_t data_out[12] = {0};
-    size_t writen       = 0;
-    size_t read         = 0;
+    size_t writen        = 0;
+    size_t read          = 0;
 
     EGL_DECLARE_RINGBUF(ringbuf, 32);
 
@@ -235,8 +237,6 @@ void test_read_write_two_chuncks_id008(void)
     TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_size(&ringbuf),      "WRITE1: Wrong RingBufer size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(4, egl_ringbuf_get_free_size(&ringbuf), "WRITE1: Wrong RingBufer FREE size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(4, egl_ringbuf_get_full_size(&ringbuf), "WRITE1: Wrong RingBufer FULL size");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(3, ringbuf.idx_in,                     "WRITE1: Wrong IN index");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(0, ringbuf.idx_out,                    "WRITE1: Wrong OUT index");
 
     read = egl_ringbuf_read(&ringbuf, data_out, 4);
 
@@ -244,8 +244,6 @@ void test_read_write_two_chuncks_id008(void)
     TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_size(&ringbuf),      "READ1: Wrong RingBufer size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_free_size(&ringbuf), "READ1: Wrong RingBufer FREE size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, egl_ringbuf_get_full_size(&ringbuf), "READ1: Wrong RingBufer FULL size");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(3, ringbuf.idx_in,                     "WRITE1: Wrong IN index");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(3, ringbuf.idx_out,                    "WRITE1: Wrong OUT index");
 
     writen = egl_ringbuf_write(&ringbuf, data_in_2, sizeof(data_in_2));
 
@@ -253,8 +251,6 @@ void test_read_write_two_chuncks_id008(void)
     TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_size(&ringbuf),      "WRITE2: Wrong RingBufer size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, egl_ringbuf_get_free_size(&ringbuf), "WRITE2: Wrong RingBufer FREE size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_full_size(&ringbuf), "WRITE2: Wrong RingBufer FULL size");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(3, ringbuf.idx_in,                     "WRITE1: Wrong IN index");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(3, ringbuf.idx_out,                    "WRITE1: Wrong OUT index");
 
     read = egl_ringbuf_read(&ringbuf, data_out, sizeof(data_in_2));
 
@@ -262,13 +258,40 @@ void test_read_write_two_chuncks_id008(void)
     TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_size(&ringbuf),      "READ1: Wrong RingBufer size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_free_size(&ringbuf), "READ1: Wrong RingBufer FREE size");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, egl_ringbuf_get_full_size(&ringbuf), "READ1: Wrong RingBufer FULL size");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(3, ringbuf.idx_in,                     "WRITE1: Wrong IN index");
-    // TEST_ASSERT_EQUAL_INT_MESSAGE(3, ringbuf.idx_out,                    "WRITE1: Wrong OUT index");
 
     /* Check output */
     for(int i = 0; i < 8; i++)
     {
         TEST_ASSERT_EQUAL_INT_MESSAGE(8 - i, data_out[i], "READ: Wrong data out");
+    }
+}
+
+void test_read_write_loop_id009(void)
+{
+    uint8_t data_in[]   = {0, 1, 2};
+    uint8_t data_out[3] = {0};
+    size_t writen       = 0;
+    size_t read         = 0;
+
+    EGL_DECLARE_RINGBUF(ringbuf, 8);
+
+    for(int i = 0; i < 100; i++)
+    {
+        memset(data_out, 0, sizeof(data_out));
+
+        writen = egl_ringbuf_write(&ringbuf, data_in, sizeof(data_in));
+        
+        TEST_ASSERT_EQUAL_INT_MESSAGE(3, writen, "WRITE: Wrong length");
+
+        read = egl_ringbuf_read(&ringbuf, data_out, sizeof(data_out));
+
+        TEST_ASSERT_EQUAL_INT_MESSAGE(3, read, "READ: Wrong length");
+
+        /* Check output */
+        for(int i = 0; i < 3; i++)
+        {   
+            TEST_ASSERT_EQUAL_INT_MESSAGE(i, data_out[i], "READ: Wrong data out");
+        }
     }
 }
 
@@ -284,6 +307,7 @@ int main(void)
     RUN_TEST(test_write_two_messages_read_one_id006);
     RUN_TEST(test_write_one_messages_read_two_id007);
     RUN_TEST(test_read_write_two_chuncks_id008);
+    RUN_TEST(test_read_write_loop_id009);
 
     return (UnityEnd());
 }
