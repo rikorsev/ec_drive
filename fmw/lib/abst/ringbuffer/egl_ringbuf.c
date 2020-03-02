@@ -33,8 +33,8 @@ egl_ringbuf_t* egl_ringbuf_create(size_t sz)
   /* Init ringbuffer */
   prb->buff    = pbuff;
   prb->size    = sz;
-  prb->idx_in  = 0;
-  prb->idx_out = 0;
+  prb->wi      = 0;
+  prb->ri      = 0;
 
   return prb;
 }
@@ -47,25 +47,25 @@ void egl_ringbuf_delete(egl_ringbuf_t *prb)
 
 uint8_t *egl_ringbuf_get_in_ptr(egl_ringbuf_t *prb)
 {
-  return &prb->buff[prb->idx_in];
+  return &prb->buff[prb->wi];
 }
 
 uint8_t *egl_ringbuf_get_out_ptr(egl_ringbuf_t *prb)
 {
-  return &prb->buff[prb->idx_out];
+  return &prb->buff[prb->ri];
 }
 
 size_t egl_ringbuf_get_cont_free_size(egl_ringbuf_t *prb)
 {
   assert(prb != NULL);
 
-  if(prb->idx_out > prb->idx_in)
+  if(prb->ri > prb->wi)
   {
-    return prb->idx_out - prb->idx_in;
+    return prb->ri - prb->wi;
   }
   else
   {
-    return prb->size - prb->idx_in;
+    return prb->size - prb->wi;
   }
 }
 
@@ -73,13 +73,13 @@ size_t egl_ringbuf_get_cont_full_size(egl_ringbuf_t *prb)
 {
   assert(prb != NULL);
 
-  if(prb->idx_out > prb->idx_in)
+  if(prb->ri > prb->wi)
   {
-    return prb->size - prb->idx_out;
+    return prb->size - prb->ri;
   }
   else
   {
-    return prb->idx_in - prb->idx_out;
+    return prb->wi - prb->ri;
   }
 }
 
@@ -97,12 +97,12 @@ static inline size_t inc_idx(size_t idx, size_t size, size_t limit)
 
 static inline void inc_in_idx(egl_ringbuf_t *prb, size_t size)
 {
-  prb->idx_in = inc_idx(prb->idx_in, size, prb->size);
+  prb->wi = inc_idx(prb->wi, size, prb->size);
 }
 
 static inline void inc_out_idx(egl_ringbuf_t *prb, size_t size)
 {
-  prb->idx_out = inc_idx(prb->idx_out, size, prb->size);
+  prb->ri = inc_idx(prb->ri, size, prb->size);
 }
 
 static inline size_t truncate(egl_ringbuf_t *prb, size_t size, size_t limit)
@@ -167,6 +167,8 @@ size_t egl_ringbuf_read(egl_ringbuf_t *prb, void *dis, size_t size)
     inc_out_idx(prb, chunk_two_size);
   }
 
+  printf("wi: %d, ri: %d\r\n", prb->wi, prb->ri);
+
   return chunk_one_size + chunk_two_size;
 }
 
@@ -183,21 +185,19 @@ size_t egl_ringbuf_write(egl_ringbuf_t *prb, void *src, size_t size)
   memcpy(egl_ringbuf_get_in_ptr(prb), src, chunk_one_size);
   inc_in_idx(prb, chunk_one_size);
 
-  printf("size: %d, c1: %d\r\n", size, chunk_one_size);
-
   /* If we wrote not all, then write second one chunk */
   if(size > chunk_one_size)
   {
     /* Truncate chunk two in case if free size less then data to read */
     chunk_two_size = truncate(prb, size - chunk_one_size, egl_ringbuf_get_cont_free_size(prb));
 
-    printf("c2: %d\r\n", chunk_two_size);
-
     /* Write to buffer */
     memcpy(egl_ringbuf_get_in_ptr(prb), src + chunk_one_size, chunk_two_size);
     inc_in_idx(prb, chunk_two_size);
   }
-  
+
+  printf("wi: %d, ri: %d\r\n", prb->wi, prb->ri);
+
   return chunk_one_size + chunk_two_size;
 }
 
@@ -217,12 +217,12 @@ size_t egl_ringbuf_get_full_size(egl_ringbuf_t *prb)
 {
   assert(prb != NULL);
 
-  if(prb->idx_out > prb->idx_in)
+  if(prb->ri > prb->wi)
   {
-    return prb->size - prb->idx_out + prb->idx_in;
+    return prb->size - prb->ri + prb->wi;
   }
   else
   {
-    return prb->idx_in - prb->idx_out;
+    return prb->wi - prb->ri;
   }
 }

@@ -9,8 +9,8 @@ typedef struct
 {
   uint8_t* buff;
   size_t   size;
-  size_t   idx_in;
-  size_t   idx_out;
+  size_t   ri;
+  size_t   wi;
 }egl_ringbuf_t;
 
 #define EGL_DECLARE_RINGBUF(name, sz)                \
@@ -19,8 +19,8 @@ egl_ringbuf_t name =                                 \
 {                                                    \
   .buff      = rb_##name##_buff,                     \
   .size      = (sz),                                 \
-  .idx_in    = 0,                                    \
-  .idx_out   = 0,                                    \
+  .ri        = 0,                                    \
+  .wi        = 0,                                    \
 }
 
 egl_ringbuf_t* egl_ringbuf_create(size_t sz);
