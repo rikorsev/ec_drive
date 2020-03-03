@@ -4,8 +4,6 @@
 #include <string.h>
 #include "egl_ringbuf.h"
 
-#define LIMIT_INDEX (-1)
-
 egl_ringbuf_t* egl_ringbuf_create(size_t sz)
 {
   uint8_t *pbuff;
