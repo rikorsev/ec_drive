@@ -27,7 +27,7 @@ static egl_result_t set(bool state)
     GPIO_ResetBits(PORT, PIN);
   }
   
-  return EGL_NOT_SUPPORTED;
+  return EGL_SUCCESS;
 }
 
 static egl_pio_t int1_impl = 
