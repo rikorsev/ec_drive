@@ -92,35 +92,35 @@ static void spi_handler(void)
   result = egl_itf_read(spi(), buff_in, &read_len);
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("SPI: read fail. Result: %s\r\n", EGL_RESULT());
+    // EGL_TRACE_ERROR("SPI: read fail. Result: %s\r\n", EGL_RESULT());
     return;
   }
   
   if(read_len > 0)
   {
     EGL_TRACE_INFO("SPI: got %d\r\n", read_len);
-    for(int i = 0; i < read_len; i++)
-    {
-      EGL_TRACE_INFO("0x%02x\r\n", buff_in[i]);
-    }
+    // for(int i = 0; i < read_len; i++)
+    // {
+    //   EGL_TRACE_INFO("0x%02x\r\n", buff_in[i]);
+    // }
 
     result = egl_ptc_decode(spi_llp(), buff_in, &read_len, buff_out, &write_len);
     if(result != EGL_SUCCESS && result != EGL_PROCESS)
     {
-      EGL_TRACE_INFO("SPI: decode fail. Result: %s\r\n", EGL_RESULT());
+      // EGL_TRACE_INFO("SPI: decode fail. Result: %s\r\n", EGL_RESULT());
       return;
     }
   
-    EGL_TRACE_INFO("SPI: send %d\r\n", write_len);
+    // EGL_TRACE_INFO("SPI: send %d\r\n", write_len);
       
     result = egl_itf_write(spi(), buff_out, &write_len);
     if(result != EGL_SUCCESS)
     {
-      EGL_TRACE_ERROR("SPI: write fail. Result %s\r\n", EGL_RESULT());
+      // EGL_TRACE_ERROR("SPI: write fail. Result %s\r\n", EGL_RESULT());
       return;
     }
 
-    EGL_TRACE_INFO("SPI: sent %d\r\n", write_len);
+    // EGL_TRACE_INFO("SPI: sent %d\r\n", write_len);
   }
 }  
 
@@ -198,9 +198,10 @@ int main(void)
   EGL_TRACE_INFO("EC Drive v0.1\r\n");
 
   egl_itf_open(spi());
-  egl_led_off(led());
-  
   egl_led_on(led());
+
+  egl_pio_set(int1(), false);
+  egl_pio_set(int2(), false);
   
   //motor_test(32, 100, 10);  
   

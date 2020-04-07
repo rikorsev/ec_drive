@@ -2,6 +2,7 @@
 #define SPI_H
 
 egl_interface_t *spi(void);
-void spi_irq(void);
+void spi_dma_tx_irq(void);
+void spi_dma_rx_irq(void);
 
 #endif // SPI_H

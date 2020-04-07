@@ -254,15 +254,15 @@ void test_write_read_two_chuncks_id008(void)
 
     read = egl_ringbuf_read(&ringbuf, data_out, sizeof(data_in_2));
 
-    TEST_ASSERT_EQUAL_INT_MESSAGE(8, read,                                "READ1: Wrong length");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_size(&ringbuf),      "READ1: Wrong RingBufer size");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_free_size(&ringbuf), "READ1: Wrong RingBufer FREE size");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(0, egl_ringbuf_get_full_size(&ringbuf), "READ1: Wrong RingBufer FULL size");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(8, read,                                "READ2: Wrong length");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_size(&ringbuf),      "READ2: Wrong RingBufer size");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(8, egl_ringbuf_get_free_size(&ringbuf), "READ2: Wrong RingBufer FREE size");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, egl_ringbuf_get_full_size(&ringbuf), "READ2: Wrong RingBufer FULL size");
 
     /* Check output */
     for(int i = 0; i < 8; i++)
     {
-        TEST_ASSERT_EQUAL_INT_MESSAGE(8 - i, data_out[i], "READ: Wrong data out");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(8 - i, data_out[i], "READ2: Wrong data out");
     }
 }
 

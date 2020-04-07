@@ -175,8 +175,18 @@ void DMA1_Channel2_3_IRQHandler(void)
 {
   if(DMA_GetITStatus(DMA1_IT_TC3) == SET)
   {
-    spi_irq();
+    spi_dma_tx_irq();
+
+    DMA_ClearITPendingBit(DMA1_IT_TC3);
   }
+
+  // if(DMA_GetITStatus(DMA1_IT_TC2) == SET)
+  // {
+  //   spi_dma_rx_irq();
+
+  //   DMA_ClearITPendingBit(DMA1_IT_TC2);
+  //   DMA_Cmd(DMA1_Channel2, DISABLE);
+  // }
 }
 
 void TIM3_IRQHandler(void)

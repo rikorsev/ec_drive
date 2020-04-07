@@ -129,10 +129,14 @@ static size_t write_polling(void* buff, size_t len)
 static size_t write_interrupt(void* buff, size_t len)
 {
   len = egl_ringbuf_write(&tx_buff, buff, len);
-  
-  if(USART_GetFlagStatus(USART, USART_FLAG_TC) == SET)
+  uint8_t data = 0;
+   
+  if(USART_GetFlagStatus(USART, USART_FLAG_TC) == SET && egl_ringbuf_is_empty(&tx_buff) == false)
   {
     USART_ITConfig(USART, USART_IT_TXE, ENABLE);
+
+    (void)egl_ringbuf_read(&tx_buff, &data, 1);
+    USART_SendData(USART, (uint16_t)data);
   }
   
   return len;
@@ -182,7 +186,7 @@ void dbg_irq(void)
   uint8_t data = 0;
 
   /* if ringbuffer not empty */ 
-  if(egl_ringbuf_get_full_size(&tx_buff) > 0)
+  if(egl_ringbuf_is_empty(&tx_buff) == false)
   {
     (void)egl_ringbuf_read(&tx_buff, &data, 1);
     USART_SendData(USART, (uint16_t)data);

@@ -66,7 +66,7 @@ size_t egl_ringbuf_get_cont_full_size(egl_ringbuf_t *ring)
   }
   else if(ring->ri == ring->wi)
   {
-    return ring->overrun == true ? ring->size - ring->ri : ring->ri;
+    return ring->overrun == true ? ring->size - ring->ri : 0;
   }
   else
   {
@@ -78,7 +78,7 @@ size_t egl_ringbuf_get_cont_free_size(egl_ringbuf_t *ring)
 {
   assert(ring != NULL);
 
-  return ring->size - egl_ringbuf_get_cont_full_size(ring);
+  return ring->size - egl_ringbuf_get_cont_full_size(ring) - ring->wi;
 }
 
 static inline size_t inc_idx(size_t idx, size_t size, size_t limit)
@@ -213,12 +213,6 @@ size_t egl_ringbuf_get_size(egl_ringbuf_t *ring)
   return ring->size;
 }
 
-size_t egl_ringbuf_get_free_size(egl_ringbuf_t *ring)
-{
-  assert(ring != NULL);
-  return ring->size - egl_ringbuf_get_full_size(ring);
-}
-
 size_t egl_ringbuf_get_full_size(egl_ringbuf_t *ring)
 {
   assert(ring != NULL);
@@ -235,4 +229,26 @@ size_t egl_ringbuf_get_full_size(egl_ringbuf_t *ring)
   {
     return ring->wi - ring->ri;
   }
+}
+
+size_t egl_ringbuf_get_free_size(egl_ringbuf_t *ring)
+{
+  assert(ring != NULL);
+  return ring->size - egl_ringbuf_get_full_size(ring);
+}
+
+void egl_ringbuf_reset(egl_ringbuf_t *ring)
+{
+  ring->wi = 0;
+  ring->ri = 0;
+}
+
+bool egl_ringbuf_is_empty(egl_ringbuf_t *ring)
+{
+  return egl_ringbuf_get_full_size(ring) == 0 ? true : false;
+}
+
+bool egl_ringbuf_is_full(egl_ringbuf_t *ring)
+{
+  return egl_ringbuf_get_free_size(ring) == 0 ? true : false;
 }

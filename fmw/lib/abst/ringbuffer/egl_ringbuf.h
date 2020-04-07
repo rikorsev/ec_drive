@@ -36,6 +36,9 @@ size_t egl_ringbuf_write(egl_ringbuf_t *ring, void *src, size_t sz);
 size_t egl_ringbuf_get_size(egl_ringbuf_t *ring);
 size_t egl_ringbuf_get_free_size(egl_ringbuf_t *ring);
 size_t egl_ringbuf_get_full_size(egl_ringbuf_t *ring);
+void egl_ringbuf_reset(egl_ringbuf_t *ring);
+bool egl_ringbuf_is_empty(egl_ringbuf_t *ring);
+bool egl_ringbuf_is_full(egl_ringbuf_t *ring);
 
 /* API to work with ringbuffer directly. Useful in case to work with DMA */
 uint8_t *egl_ringbuf_get_in_ptr(egl_ringbuf_t *ring);
