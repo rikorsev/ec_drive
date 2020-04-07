@@ -36,6 +36,7 @@ INCLUDE+=-I$(LIB_DIR)/func/trace
 INCLUDE+=-I$(LIB_DIR)/func/bldc
 INCLUDE+=-I$(LIB_DIR)/func/crc
 INCLUDE+=-I$(LIB_DIR)/func/pio
+INCLUDE+=-I$(LIB_DIR)/func/board
 INCLUDE+=-I$(LIB_DIR)/protocol
 INCLUDE+=-I$(LIB_DIR)/protocol/llp
 
@@ -62,6 +63,7 @@ SRC_BSP+=$(BSP_DIR)/spi/spi.c
 SRC_BSP+=$(BSP_DIR)/crc/crc.c
 SRC_BSP+=$(BSP_DIR)/int1/int1.c
 SRC_BSP+=$(BSP_DIR)/int2/int2.c
+SRC_BSP+=$(BSP_DIR)/board/board.c
 
 # Peripheral library files
 SRC_PERIPH+=$(PERIPH_CMSIS_DIR)/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c
@@ -102,8 +104,10 @@ SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc.c
 SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_ccitt.c
 SRC_LIB+=$(LIB_DIR)/func/crc/egl_crc16_xmodem.c
 SRC_LIB+=$(LIB_DIR)/func/pio/egl_pio.c
+SRC_LIB+=$(LIB_DIR)/func/board/egl_board.c
 SRC_LIB+=$(LIB_DIR)/protocol/egl_protocol.c
 SRC_LIB+=$(LIB_DIR)/protocol/llp/egl_llp.c
+
 
 SRC+=$(SRC_PERIPH)
 SRC+=$(SRC_APP)

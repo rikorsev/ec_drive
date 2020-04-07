@@ -25,14 +25,14 @@ static egl_crc_t crc_out =
 
 static egl_result_t cmd_motor_start(const void *in, size_t len_in, void *out, size_t *len_out)
 {
-  egl_result_t result = EGL_SUCCESS;
+  egl_result_t result = EGL_FAIL;
   
   EGL_TRACE_INFO("Motor start\r\n");
   
   result = egl_bldc_start(motor());
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_INFO("Motor start - fail\r\n");
+    EGL_TRACE_ERROR("Motor start - fail. Result: %s\r\n", EGL_RESULT());
   }
   
   return result;
@@ -40,14 +40,14 @@ static egl_result_t cmd_motor_start(const void *in, size_t len_in, void *out, si
 
 static egl_result_t cmd_motor_stop(const void *in, size_t len_in, void *out, size_t *len_out)
 {
-  egl_result_t result = EGL_SUCCESS;
+  egl_result_t result = EGL_FAIL;
   
   EGL_TRACE_INFO("Motor stop\r\n");
   
   result = egl_bldc_stop(motor());  
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_INFO("Motor stop - fail\r\n");
+    EGL_TRACE_ERROR("Motor stop - fail. Result: %s\r\n", EGL_RESULT());
   }
   
   return result;
@@ -117,6 +117,33 @@ static egl_result_t cmd_disable_trace(const void *in, size_t len_in, void *out, 
   return EGL_SUCCESS;
 }
 
+static egl_result_t cmd_reset(const void *in, size_t len_in, void *out, size_t *len_out)
+{
+  egl_result_t result = EGL_FAIL;
+
+  /* Swich to polling mode */
+  egl_itf_ioctl(dbg(), DBG_WRITE_POLLING_IOCTL, NULL, 0);
+
+  EGL_TRACE_INFO("Reset\r\n");
+
+  /* Stop motor */
+  result = egl_bldc_stop(motor());  
+  if(result != EGL_SUCCESS)
+  {
+    EGL_TRACE_ERROR("Motor stop - fail. Result: %s\r\n", EGL_RESULT());
+    return result;
+  }
+
+  /* Reset board */
+  result = egl_board_reset(board());
+  if(result != EGL_SUCCESS)
+  {
+    EGL_TRACE_ERROR("Reset - fail. Result: %s\r\n", EGL_RESULT());
+  }
+
+  return result;
+}
+
 static const egl_llp_req_t cmd_map[] =
 {
   { .id = CMD_MOTOR_START_ID,      .handler = cmd_motor_start         },
@@ -126,6 +153,7 @@ static const egl_llp_req_t cmd_map[] =
   { .id = CMD_MONITORING_STOP_ID,  .handler = cmd_monitoring_stop     },
   { .id = CMD_ENABLE_TRACE_ID,     .handler = cmd_enable_trace        },
   { .id = CMD_DISABLE_TRACE_ID,    .handler = cmd_disable_trace       },
+  { .id = CMD_RESET_ID,            .handler = cmd_reset               },
   { .id = CMD_TEST_ID,             .handler = cmd_test                }
 };
 

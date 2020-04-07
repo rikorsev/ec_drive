@@ -9,6 +9,7 @@
 #define CMD_MODITORING_DATA_ID  ((uint16_t) 0xC006)
 #define CMD_ENABLE_TRACE_ID     ((uint16_t) 0xC007)
 #define CMD_DISABLE_TRACE_ID    ((uint16_t) 0xC008)
+#define CMD_RESET_ID            ((uint16_t) 0xC009)
 #define CMD_TEST_ID             ((uint16_t) 0xC0FF)
 
 egl_ptc_t* spi_llp(void);
