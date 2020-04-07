@@ -6,7 +6,7 @@
 #include "cmd_handler.h"
 
 #define PERIOD 10 // 10 milliseconds
-#define OUT_LEN (sizeof(monitor_entry_t) + 6) // +4 bytes of meta data (2 for command ID, 2 for length and 2 for CRC)
+#define OUT_LEN (sizeof(monitor_entry_t) + 6) // +6 bytes of meta data (2 for command ID, 2 for length and 2 for CRC)
 
 #pragma pack(push, 1)
 typedef struct
@@ -74,7 +74,7 @@ static egl_result_t send(uint8_t *out)
 
     if(write_len != OUT_LEN)
     {
-        EGL_TRACE_ERROR("Write len %d, expected %d\r\n", write_len, sizeof(out));
+        EGL_TRACE_ERROR("Write len %d, expected %d\r\n", write_len, OUT_LEN);
         return EGL_FAIL;
     }
 
