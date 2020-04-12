@@ -134,7 +134,6 @@ void EXTI0_1_IRQHandler(void)
     EXTI_ClearITPendingBit(HALL_1_EXTI);
 
     egl_led_toggle(led());
-    egl_pio_toggle(int2());
   }
   
   if(EXTI_GetITStatus(HALL_2_EXTI) == SET)
@@ -148,7 +147,6 @@ void EXTI0_1_IRQHandler(void)
     EXTI_ClearITPendingBit(HALL_2_EXTI);
 
     egl_led_toggle(led());
-    egl_pio_toggle(int2());
   }
 }
 
@@ -167,7 +165,6 @@ void EXTI4_15_IRQHandler(void)
     EXTI_ClearITPendingBit(HALL_3_EXTI);
 
     egl_led_toggle(led());
-    egl_pio_toggle(int2());  
   }
 }
 
@@ -176,7 +173,7 @@ void DMA1_Channel2_3_IRQHandler(void)
   if(DMA_GetITStatus(DMA1_IT_TC3) == SET)
   {
     spi_dma_tx_irq();
-
+   
     DMA_ClearITPendingBit(DMA1_IT_TC3);
   }
 

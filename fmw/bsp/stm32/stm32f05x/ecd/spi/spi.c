@@ -6,26 +6,27 @@
 #include "egl_lib.h"
 #include "ecd_bsp.h"
 
-#define SPI          (SPI1)
-#define PORT1        (GPIOB)
-#define PORT2        (GPIOA)
-#define SCK          (GPIO_Pin_3)
-#define MISO         (GPIO_Pin_4)
-#define MOSI         (GPIO_Pin_5)
-#define CS           (GPIO_Pin_15)
-#define CLOCK_A      (RCC_AHBPeriph_GPIOA)
-#define CLOCK_B      (RCC_AHBPeriph_GPIOB)
-#define CLOCK_SPI    (RCC_APB2Periph_SPI1)
-#define SCK_AF       (GPIO_PinSource3)
-#define MISO_AF      (GPIO_PinSource4)
-#define MOSI_AF      (GPIO_PinSource5)
-#define CS_AF        (GPIO_PinSource15)
-#define BUFF_SIZE    (128)
-#define IRQ_PRIORITY (1)
-#define DMA_RX       (DMA1_Channel2)
-#define DMA_TX       (DMA1_Channel3)
-#define CLOCK_DMA    (RCC_AHBPeriph_DMA1)
-#define IRQ          (DMA1_Channel2_3_IRQn)
+#define SPI           (SPI1)
+#define PORT1         (GPIOB)
+#define PORT2         (GPIOA)
+#define SCK           (GPIO_Pin_3)
+#define MISO          (GPIO_Pin_4)
+#define MOSI          (GPIO_Pin_5)
+#define CS            (GPIO_Pin_15)
+#define CLOCK_A       (RCC_AHBPeriph_GPIOA)
+#define CLOCK_B       (RCC_AHBPeriph_GPIOB)
+#define CLOCK_SPI     (RCC_APB2Periph_SPI1)
+#define SCK_AF        (GPIO_PinSource3)
+#define MISO_AF       (GPIO_PinSource4)
+#define MOSI_AF       (GPIO_PinSource5)
+#define CS_AF         (GPIO_PinSource15)
+#define BUFF_SIZE     (128)
+#define IRQ_PRIORITY  (1)
+#define DMA_RX        (DMA1_Channel2)
+#define DMA_TX        (DMA1_Channel3)
+#define CLOCK_DMA     (RCC_AHBPeriph_DMA1)
+#define IRQ           (DMA1_Channel2_3_IRQn)
+#define SPI_FIFO_SIZE (4)
 
 /* declare ring buffers */
 EGL_DECLARE_RINGBUF(tx_rbuff, BUFF_SIZE);
@@ -159,7 +160,7 @@ static egl_result_t open(void)
   return EGL_SUCCESS;
 }
 
-static void setup_dma_write(void *data, size_t len)
+static egl_result_t setup_dma_write(void *data, size_t len)
 {
   /* config dma tx channel */
   static DMA_InitTypeDef config = 
@@ -177,35 +178,50 @@ static void setup_dma_write(void *data, size_t len)
 
   assert(data);
 
-  if( len > 0 )
+  if( len < SPI_FIFO_SIZE )
   {
-    /* check if dma in error state */
-    assert(DMA_GetFlagStatus(DMA1_FLAG_TE3) == RESET);
-
-    /* Set up dma transmission */
-    config.DMA_MemoryBaseAddr = (uint32_t)data;
-    config.DMA_BufferSize     = len;
-
-    /* Start dma transmission */
-    DMA_Cmd(DMA_TX, DISABLE);
-    DMA_Init(DMA_TX, &config);
-    DMA_Cmd(DMA_TX, ENABLE);
+    return EGL_INVALID_PARAM;
   }
+
+  /* check if dma in error state */
+  assert(DMA_GetFlagStatus(DMA1_FLAG_TE3) == RESET);
+
+  /* Set up dma transmission */
+  config.DMA_MemoryBaseAddr = (uint32_t)data;
+  config.DMA_BufferSize     = len;
+
+  /* Start dma transmission */
+  DMA_Cmd(DMA_TX, DISABLE);
+  DMA_Init(DMA_TX, &config);
+
+  /* Wait till current data transfer will be finished */
+  while(SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_BSY) == SET)
+  {
+    /* Do nothing */
+  }
+
+  DMA_Cmd(DMA_TX, ENABLE);
+
+  return EGL_SUCCESS;
 }
 
 static size_t write(void *data, size_t len)
 {
   size_t cont_full_size = 0;
 
+  // egl_pio_set(int2(), true);
+
   len = egl_ringbuf_write(&tx_rbuff, data, len);
 
-  /* If transmission not started, then srart it */
+  /* If DMA transmission not started, then srart it */
   if(DMA_GetCurrDataCounter(DMA_TX) == 0)
   {
     cont_full_size = egl_ringbuf_get_cont_full_size(&tx_rbuff);
 
-    setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), cont_full_size); 
-    egl_ringbuf_reserve_for_read(&tx_rbuff, cont_full_size);
+    if(EGL_SUCCESS == setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), cont_full_size))
+    {
+      assert(cont_full_size == egl_ringbuf_reserve_for_read(&tx_rbuff, cont_full_size));
+    }
   }
 
   if(len > 0)
@@ -213,6 +229,8 @@ static size_t write(void *data, size_t len)
     /* Notify that board has new data */
     egl_pio_set(int1(), true);  
   }
+
+  // egl_pio_set(int2(), false);
 
   return len;
 }
@@ -225,13 +243,13 @@ static size_t read(void* data, size_t len)
   size_t recived   = 0;
   size_t full      = 0;
   
-  /* 
-    check CS pin, if it is in low state then transmission in process
-    and we should try to read data laiter 
+  /*
+    Check CS pin, if it is in low state then transmission in process 
+    and we should wait till current transmission will be finished 
   */
-  if(GPIO_ReadInputDataBit(PORT2, CS) == false)
+  while(GPIO_ReadInputDataBit(PORT2, CS) == false)
   {
-    return 0;
+    /* Do nothing */
   }
 
   /* Check that we got from DMA not more then free buffer size */
@@ -284,17 +302,21 @@ static egl_result_t close(void)
 
 void spi_dma_tx_irq(void)
 {
-  size_t write_len = egl_ringbuf_get_cont_full_size(&tx_rbuff);
-  size_t full_len = egl_ringbuf_get_full_size(&tx_rbuff);
+  size_t cont_full_size = egl_ringbuf_get_cont_full_size(&tx_rbuff);
+  //size_t full_len = egl_ringbuf_get_full_size(&tx_rbuff);
 
-  EGL_TRACE_DEBUG("Write len: %d, full size: %d\r\n", write_len, full_len);
+  //EGL_TRACE_DEBUG("Write len: %d, full size: %d\r\n", write_len, full_len);
   /* If we have something more to transmit,
      Thent setup new DMA transfer to write */
-  if(write_len > 0)
+  if(cont_full_size > 0)
   {
-    setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), write_len);
-    write_len = egl_ringbuf_reserve_for_read(&tx_rbuff, write_len);
-    EGL_TRACE_DEBUG("Reserved: %d, Left: %d\r\n", write_len, egl_ringbuf_get_cont_full_size(&tx_rbuff));
+    egl_pio_set(int2(), true);
+    if(EGL_SUCCESS == setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), cont_full_size))
+    {
+      assert(cont_full_size == egl_ringbuf_reserve_for_read(&tx_rbuff, cont_full_size));
+    }
+    egl_pio_set(int2(), false);
+    //EGL_TRACE_DEBUG("Reserved: %d, Left: %d\r\n", write_len, egl_ringbuf_get_cont_full_size(&tx_rbuff));
   }
   /* Else notify that transmission has been finished */
   else
