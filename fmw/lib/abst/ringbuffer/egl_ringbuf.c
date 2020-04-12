@@ -158,13 +158,14 @@ size_t egl_ringbuf_read(egl_ringbuf_t *ring, void *dis, size_t size)
   /* Truncete size of first chunk to size to read */
   size_t chunk_one_size = truncate(ring, size, egl_ringbuf_get_cont_full_size(ring));
   size_t chunk_two_size = 0;
+  uint8_t *out = egl_ringbuf_get_out_ptr(ring);
 
   assert(ring != NULL);
   assert(dis != NULL);
 
   /* Read first chunk of data */
-  memcpy(dis, egl_ringbuf_get_out_ptr(ring), chunk_one_size);
   inc_out_idx(ring, chunk_one_size);
+  memcpy(dis, out, chunk_one_size);
 
   /* If we read not all then read second one chunk */
   if(size > chunk_one_size)
@@ -173,8 +174,9 @@ size_t egl_ringbuf_read(egl_ringbuf_t *ring, void *dis, size_t size)
     chunk_two_size = truncate(ring, size - chunk_one_size, egl_ringbuf_get_cont_full_size(ring));
 
     /* Read second chunk of data */
-    memcpy(dis + chunk_one_size, egl_ringbuf_get_out_ptr(ring), chunk_two_size);
+    out = egl_ringbuf_get_out_ptr(ring);
     inc_out_idx(ring, chunk_two_size);
+    memcpy(dis + chunk_one_size, out, chunk_two_size);
   }
 
   return chunk_one_size + chunk_two_size;
@@ -185,13 +187,14 @@ size_t egl_ringbuf_write(egl_ringbuf_t *ring, void *src, size_t size)
   /* Truncete size of first chunk to size to read */
   size_t chunk_one_size = truncate(ring, size, egl_ringbuf_get_cont_free_size(ring));
   size_t chunk_two_size = 0;
+  uint8_t *in = egl_ringbuf_get_in_ptr(ring);
 
   assert(ring != NULL);
   assert(src != NULL);
   
   /* Write first chunk of data */
-  memcpy(egl_ringbuf_get_in_ptr(ring), src, chunk_one_size);
   inc_in_idx(ring, chunk_one_size);
+  memcpy(in, src, chunk_one_size);
 
   /* If we wrote not all, then write second one chunk */
   if(size > chunk_one_size)
@@ -200,8 +203,9 @@ size_t egl_ringbuf_write(egl_ringbuf_t *ring, void *src, size_t size)
     chunk_two_size = truncate(ring, size - chunk_one_size, egl_ringbuf_get_cont_free_size(ring));
 
     /* Write to buffer */
-    memcpy(egl_ringbuf_get_in_ptr(ring), src + chunk_one_size, chunk_two_size);
+    in = egl_ringbuf_get_in_ptr(ring);
     inc_in_idx(ring, chunk_two_size);
+    memcpy(in, src + chunk_one_size, chunk_two_size);
   }
 
   return chunk_one_size + chunk_two_size;
