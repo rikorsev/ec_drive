@@ -237,10 +237,8 @@ static egl_result_t encode(egl_llp_t *llp, uint8_t *out, size_t *len)
   offset += llp->out.pack.len;
 
   /* Calc CRC */
-  egl_pio_set(int2(), true);  
   egl_crc_reset(llp->out.crc);
   llp->out.pack.checksum = egl_crc16_calc(llp->out.crc, out, offset);
-  egl_pio_set(int2(), false);
 
   /* Copy crc */
   memcpy(out + offset, &llp->out.pack.checksum, sizeof(llp->out.pack.checksum));
