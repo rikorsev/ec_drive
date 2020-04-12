@@ -5,16 +5,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "egl_result.h"
 #include "egl_crc.h"
 #include "egl_llp.h"
 #include "egl_trace.h"
-
-/* TBD: remove */
-#include <stdbool.h>
-#include "egl_lib.h"
-#include "ecd_bsp.h"
 
 static egl_llp_handler_t egl_llp_req_handler_get(uint16_t id, egl_llp_req_t *req_map, size_t req_map_len)
 {
