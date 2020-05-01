@@ -11,6 +11,7 @@ typedef enum
     EGL_NOT_SUPPORTED,
     EGL_OUT_OF_BOUNDARY,
     EGL_INVALID_PARAM,
+    EGL_INVALID_STATE,
 
     EGL_LAST
   }egl_result_t;
