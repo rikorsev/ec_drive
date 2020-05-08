@@ -1,53 +1,42 @@
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
-egl_resulr_t egl_chunk_init(egl_chunks_t *chunks, void *buffer, size_t size)
+#include "egl_chunk.h"
+
+egl_result_t egl_chunk_init(egl_chunks_t *chunks, char *buffer, size_t size)
 {
     assert(chunks != NULL);
-    assert(data   != NULL);
+    assert(buffer != NULL);
 
-    if(size < chunks->size * chunks->number)
+    if(size == 0 || size % chunks->number != 0)
     {
         return EGL_INVALID_PARAM;
     }
 
-    for(int i = 0; i < chunks->num; i++)
+    chunks->size = size / chunks->number;
+
+    for(int i = 0; i < chunks->number; i++)
     {
-        chunks->chunk[i].buf = &buffer[i * chunks->size];
+        chunks->chunk[i].buf  = &buffer[i * chunks->size];
         chunks->chunk[i].size = 0;
     }
+
+    egl_chunk_reset(chunks);
+
+    return EGL_SUCCESS;
 }
 
-// egl_result_t egl_chunk_write(egl_chunks_t *chunks, void *data, size_t size)
-// {
-//     unsigned int index current_index = chunks->in;
-//     unsigned int index num = (size / chunk->number + 1);
-//     egl_chunk_t *chunk = NULL;
+void egl_chunk_reset(egl_chunks_t *chunks)
+{
+    chunks->in = 0;
+    chunks->out = 0;
+}
 
-//     assert(chunks != NULL);
-//     assert(data   != NULL);
-
-//     /* Update write index */
-//     chunks->in = num % chunk->size;
-
-//      Copy data to chanks 
-//     for(int i = 0; i < num; i++)
-//     {
-//         chunk = chunks->chunk[(current_index + i) % chunks->number];
-        
-//         assert(chunk != NULL);
-//         assert(chunk->buff != NULL);
-        
-//         chunk->size = size > chunks->size ? chunks->size ? size;
-//         memcpy(chunk->buf, data + i * chunk->size, chunk->size);
-//     }
-
-//     return EGL_SUCCESS;
-// }
 
 egl_result_t egl_chunk_write_with_offset_and_index(egl_chunks_t *chunks, unsigned int index, void *data, size_t offset, size_t size)
 {
     egl_chunk_t *chunk = NULL;
-    size_t write_size = 0;
 
     assert(chunks != NULL);
     assert(data   != NULL);
@@ -62,7 +51,8 @@ egl_result_t egl_chunk_write_with_offset_and_index(egl_chunks_t *chunks, unsigne
         return EGL_OUT_OF_BOUNDARY;
     }
 
-    chunk = chunks->chunk[index];
+    chunk = &chunks->chunk[index];
+    chunk->size = size;
 
     memcpy(chunk->buf + offset, data, size);
 
@@ -92,14 +82,15 @@ egl_result_t egl_chunk_read_with_offset_and_index(egl_chunks_t *chunks, unsigned
         return EGL_INVALID_PARAM;
     }
 
+    chunk = &chunks->chunk[index];
+
     if(offset > chunk->size)
     {
         return EGL_OUT_OF_BOUNDARY;
     } 
 
-    chunk = chunks->chunk[index];
     read_size = chunk->size - offset;
-    read_size = read_size < size ? read_size : size;
+    read_size = read_size < *size ? read_size : *size;
 
     memcpy(data, chunk->buf + offset, read_size);
 
@@ -152,43 +143,11 @@ egl_result_t egl_chunk_read_and_clear(egl_chunks_t *chunks, void *data, size_t *
     return result;
 }
 
-// egl_result_t egl_chunk_read(egl_chunks_t *chunks, void *data, size_t *size)
-// {
-//     unsigned int index current_index = chunks->out;
-//     unsigned int index num = (size / chunk->number + 1);
-//     size_t read_size  = 0;
-//     size_t offset = 0;
-//     egl_chunk_t *chunk = NULL;
-
-//     assert(chunks  != NULL);
-//     assert(data    != NULL);
-
-//     /* Update read index */
-//     chunks->out = num % chunk->size;
-
-//      Copy data from chanks  
-//     for(int i = 0; i < num; i++)
-//     {
-//         chunk = chunks->chunk[(current_index + i) % chunks->number];
-        
-//         assert(chunk != NULL);
-//         assert(chunk->buff != NULL);
-
-//         read_size = size > chunks->size ? chunks->size ? size;
-//         memcpy(data + offset, chunk->buf, read_size);
-//         offset += read_size;
-//     }
-
-//     *size = offset;
-
-//     return EGL_SUCCESS;
-// }
-
 egl_chunk_t *egl_chunk_out_get(egl_chunks_t *chunks)
 {
     assert(chunks  != NULL);
 
-    egl_chunk_t *chunk = chunks->chunk[chunks->out++];
+    egl_chunk_t *chunk = &chunks->chunk[chunks->out++];
     chunks->out %= chunks->size;
 
     return chunk;
@@ -198,7 +157,7 @@ egl_chunk_t *egl_chunk_in_get(egl_chunks_t *chunks)
 {
     assert(chunks  != NULL);
 
-    egl_chunk_t *chunk = chunks->chunk[chunks->in++];
+    egl_chunk_t *chunk = &chunks->chunk[chunks->in++];
     chunks->in %= chunks->size;
 
     return chunk;
@@ -208,5 +167,5 @@ egl_chunk_t *egl_chunk_by_index_get(egl_chunks_t *chunks, unsigned int index)
 {
     assert(chunks  != NULL);
 
-    return index < chunks->number ? chunks->chunk[index] : NULL;
+    return index < chunks->number ? &chunks->chunk[index] : NULL;
 }
