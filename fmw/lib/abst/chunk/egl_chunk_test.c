@@ -291,6 +291,39 @@ TEST_GROUP_RUNNER(read_write)
     RUN_TEST_CASE(read_write, normal2);
 }
 
+TEST_GROUP(get);
+
+TEST_SETUP(get)
+{
+    /* Do nothing */
+}
+
+TEST_TEAR_DOWN(get)
+{
+    /* Do nothing */
+}
+
+TEST(get, last_written_read_with_zero_in_out_indexes)
+{
+    EGL_DECLARE_CHUNKS(chunks, 4);
+    egl_chunk_t *chunk = NULL;
+    char buffer[32] = {0};
+
+    TEST_ASSERT(egl_chunk_init(&chunks, buffer, sizeof(buffer)) == EGL_SUCCESS);
+
+    chunk = egl_chunk_last_written_get(&chunks);
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(&chunks.chunk[3], chunk, "Wring pointer");
+
+    chunk = egl_chunk_last_read_get(&chunks);
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(&chunks.chunk[3], chunk, "Wring pointer");
+
+}
+
+TEST_GROUP_RUNNER(get)
+{
+    RUN_TEST_CASE(get, last_written_read_with_zero_in_out_indexes);
+}
+
 // TEST_GROUP(write);
 
 // TEST_SETUP(write)
@@ -315,6 +348,7 @@ static void RunAllTests(void)
 {
     RUN_TEST_GROUP(init);
     RUN_TEST_GROUP(read_write);
+    RUN_TEST_GROUP(get);
 }
 
 

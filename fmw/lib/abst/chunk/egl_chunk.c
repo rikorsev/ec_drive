@@ -4,6 +4,12 @@
 
 #include "egl_chunk.h"
 
+void egl_chunk_reset(egl_chunks_t *chunks)
+{
+    chunks->in = 0;
+    chunks->out = 0;
+}
+
 egl_result_t egl_chunk_init(egl_chunks_t *chunks, char *buffer, size_t size)
 {
     assert(chunks != NULL);
@@ -27,12 +33,17 @@ egl_result_t egl_chunk_init(egl_chunks_t *chunks, char *buffer, size_t size)
     return EGL_SUCCESS;
 }
 
-void egl_chunk_reset(egl_chunks_t *chunks)
+void egl_chunk_out_index_inc(egl_chunks_t *chunks)
 {
-    chunks->in = 0;
-    chunks->out = 0;
+    assert(chunks  != NULL);
+    chunks->out = (chunks->out + 1) % chunks->number;
 }
 
+void egl_chunk_in_index_inc(egl_chunks_t *chunks)
+{
+    assert(chunks  != NULL);
+    chunks->out = (chunks->in + 1) % chunks->number;
+}
 
 egl_result_t egl_chunk_write_with_offset_and_index(egl_chunks_t *chunks, unsigned int index, void *data, size_t offset, size_t size)
 {
@@ -61,9 +72,9 @@ egl_result_t egl_chunk_write_with_offset_and_index(egl_chunks_t *chunks, unsigne
 
 egl_result_t egl_chunk_write(egl_chunks_t *chunks, void *data, size_t size)
 {
-    egl_result_t result = egl_chunk_write_with_offset_and_index(chunks, chunks->in++, data, 0, size);
+    egl_result_t result = egl_chunk_write_with_offset_and_index(chunks, chunks->in, data, 0, size);
     
-    chunks->in %= chunks->number;
+    egl_chunk_in_index_inc(chunks);
     
     return result;
 }
@@ -101,21 +112,22 @@ egl_result_t egl_chunk_read_with_offset_and_index(egl_chunks_t *chunks, unsigned
 
 egl_result_t egl_chunk_read(egl_chunks_t *chunks, void *data, size_t *size)
 {
-    egl_result_t result = egl_chunk_read_with_offset_and_index(chunks, chunks->out++, data, 0, size);
+    egl_result_t result = egl_chunk_read_with_offset_and_index(chunks, chunks->out, data, 0, size);
 
-    chunks->out %= chunks->number;
+    egl_chunk_out_index_inc(chunks);
 
     return result;
 }
 
 egl_result_t egl_chunk_clear(egl_chunks_t *chunks, unsigned int index)
 {
-    if(index > chunks->number)
+    egl_chunk_t *chunk = egl_chunk_by_index_get(chunks, index);
+    if(chunk == NULL)
     {
         return EGL_INVALID_PARAM;
     }
 
-    chunks->chunk[index].size = 0;
+    chunk->size = 0;
 
     return EGL_SUCCESS;
 }
@@ -143,29 +155,57 @@ egl_result_t egl_chunk_read_and_clear(egl_chunks_t *chunks, void *data, size_t *
     return result;
 }
 
-egl_chunk_t *egl_chunk_out_get(egl_chunks_t *chunks)
-{
-    assert(chunks  != NULL);
-
-    egl_chunk_t *chunk = &chunks->chunk[chunks->out++];
-    chunks->out %= chunks->size;
-
-    return chunk;
-}
-
-egl_chunk_t *egl_chunk_in_get(egl_chunks_t *chunks)
-{
-    assert(chunks  != NULL);
-
-    egl_chunk_t *chunk = &chunks->chunk[chunks->in++];
-    chunks->in %= chunks->size;
-
-    return chunk;
-}
-
 egl_chunk_t *egl_chunk_by_index_get(egl_chunks_t *chunks, unsigned int index)
 {
     assert(chunks  != NULL);
 
     return index < chunks->number ? &chunks->chunk[index] : NULL;
+}
+
+egl_chunk_t *egl_chunk_out_current_get(egl_chunks_t *chunks)
+{
+    assert(chunks  != NULL);
+
+    egl_chunk_t *chunk = egl_chunk_by_index_get(chunks, chunks->out++);
+    chunks->out %= chunks->number;
+
+    return chunk;
+}
+
+egl_chunk_t *egl_chunk_in_current_get(egl_chunks_t *chunks)
+{
+    assert(chunks  != NULL);
+
+    egl_chunk_t *chunk = egl_chunk_by_index_get(chunks, chunks->in++);
+    chunks->in %= chunks->number;
+
+    return chunk;
+}
+
+egl_chunk_t *egl_chunk_in_previous_get(egl_chunks_t *chunks)
+{
+    assert(chunks  != NULL);
+
+    return egl_chunk_by_index_get(chunks, (chunks->in - 1) % chunks->number);
+}
+
+egl_chunk_t *egl_chunk_out_previous_get(egl_chunks_t *chunks)
+{
+    assert(chunks  != NULL);
+
+    return egl_chunk_by_index_get(chunks, (chunks->out - 1) % chunks->number);
+}
+
+egl_chunk_t *egl_chunk_in_next_get(egl_chunks_t *chunks)
+{
+    assert(chunks  != NULL);
+
+    return egl_chunk_by_index_get(chunks, (chunks->in + 1) % chunks->number);
+}
+
+egl_chunk_t *egl_chunk_out_next_get(egl_chunks_t *chunks)
+{
+    assert(chunks  != NULL);
+
+    return egl_chunk_by_index_get(chunks, (chunks->out + 1) % chunks->number);
 }
