@@ -6,31 +6,37 @@
 #include "egl_lib.h"
 #include "ecd_bsp.h"
 
-#define SPI           (SPI1)
-#define PORT1         (GPIOB)
-#define PORT2         (GPIOA)
-#define SCK           (GPIO_Pin_3)
-#define MISO          (GPIO_Pin_4)
-#define MOSI          (GPIO_Pin_5)
-#define CS            (GPIO_Pin_15)
-#define CLOCK_A       (RCC_AHBPeriph_GPIOA)
-#define CLOCK_B       (RCC_AHBPeriph_GPIOB)
-#define CLOCK_SPI     (RCC_APB2Periph_SPI1)
-#define SCK_AF        (GPIO_PinSource3)
-#define MISO_AF       (GPIO_PinSource4)
-#define MOSI_AF       (GPIO_PinSource5)
-#define CS_AF         (GPIO_PinSource15)
-#define BUFF_SIZE     (128)
-#define IRQ_PRIORITY  (1)
-#define DMA_RX        (DMA1_Channel2)
-#define DMA_TX        (DMA1_Channel3)
-#define CLOCK_DMA     (RCC_AHBPeriph_DMA1)
-#define IRQ           (DMA1_Channel2_3_IRQn)
-#define SPI_FIFO_SIZE (4)
+#define SPI              (SPI1)
+#define PORT1            (GPIOB)
+#define PORT2            (GPIOA)
+#define SCK              (GPIO_Pin_3)
+#define MISO             (GPIO_Pin_4)
+#define MOSI             (GPIO_Pin_5)
+#define CS               (GPIO_Pin_15)
+#define CLOCK_A          (RCC_AHBPeriph_GPIOA)
+#define CLOCK_B          (RCC_AHBPeriph_GPIOB)
+#define CLOCK_SPI        (RCC_APB2Periph_SPI1)
+#define SCK_AF           (GPIO_PinSource3)
+#define MISO_AF          (GPIO_PinSource4)
+#define MOSI_AF          (GPIO_PinSource5)
+#define CS_AF            (GPIO_PinSource15)
+#define BUFF_SIZE        (128)
+#define IRQ_PRIORITY     (1)
+#define DMA_RX           (DMA1_Channel2)
+#define DMA_TX           (DMA1_Channel3)
+#define CLOCK_DMA        (RCC_AHBPeriph_DMA1)
+#define IRQ              (DMA1_Channel2_3_IRQn)
+#define SPI_FIFO_SIZE    (4)
+#define TX_CHUNKS_NUMBER (4)
+#define RX_CHUNKS_NUMBER (4)
 
 /* declare ring buffers */
 EGL_DECLARE_RINGBUF(tx_rbuff, BUFF_SIZE);
 EGL_DECLARE_RINGBUF(rx_rbuff, BUFF_SIZE);
+
+EGL_DECLARE_CHUNKS(tx_chunks, TX_CHUNKS_NUMBER);
+EGL_DECLARE_CHUNKS(rx_chunks, RX_CHUNKS_NUMBER);
+
 
 static void gpio_init(void)
 {
@@ -143,10 +149,17 @@ void dma_init(void)
 
 static void init(void)
 {
+  static char tx_buffer[BUFF_SIZE] = {0};
+  static char rx_buffer[BUFF_SIZE] = {0};
+
   gpio_init();
   spi_init();
   dma_init();
   nvic_init();
+
+  assert(egl_chunk_init(&tx_chunks, tx_buffer, sizeof(tx_buffer)) == EGL_SUCCESS);
+  assert(egl_chunk_init(&rx_chunks, rx_buffer, sizeof(rx_buffer)) == EGL_SUCCESS);
+
 }
 
 static egl_result_t open(void)
@@ -207,33 +220,55 @@ static egl_result_t setup_dma_write(void *data, size_t len)
 
 static size_t write(void *data, size_t len)
 {
-  size_t cont_full_size = 0;
-
-  // egl_pio_set(int2(), true);
-
-  len = egl_ringbuf_write(&tx_rbuff, data, len);
+  egl_result_t result = egl_chunk_write(&tx_chunks, data, len);
+  if(result != EGL_SUCCESS)
+  {
+    EGL_TRACE_ERROR("Fail to write to chunk. Result %s", EGL_RESULT());
+    return 0;
+  }
 
   /* If DMA transmission not started, then srart it */
   if(DMA_GetCurrDataCounter(DMA_TX) == 0)
   {
-    cont_full_size = egl_ringbuf_get_cont_full_size(&tx_rbuff);
-
-    if(EGL_SUCCESS == setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), cont_full_size))
-    {
-      assert(cont_full_size == egl_ringbuf_reserve_for_read(&tx_rbuff, cont_full_size));
-    }
+    egl_chunk_t *chunk = egl_chunk_in_previous_get(&tx_chunks);
+    setup_dma_write(chunk->buf, chunk->size);
   }
 
-  if(len > 0)
-  {
-    /* Notify that board has new data */
-    egl_pio_set(int1(), true);  
-  }
-
-  // egl_pio_set(int2(), false);
+  /* Notify that board has new data */
+  egl_pio_set(int1(), true);  
 
   return len;
 }
+
+// static size_t write(void *data, size_t len)
+// {
+//   size_t cont_full_size = 0;
+
+//   // egl_pio_set(int2(), true);
+
+//   len = egl_ringbuf_write(&tx_rbuff, data, len);
+
+//   /* If DMA transmission not started, then srart it */
+//   if(DMA_GetCurrDataCounter(DMA_TX) == 0)
+//   {
+//     cont_full_size = egl_ringbuf_get_cont_full_size(&tx_rbuff);
+
+//     if(EGL_SUCCESS == setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), cont_full_size))
+//     {
+//       assert(cont_full_size == egl_ringbuf_reserve_for_read(&tx_rbuff, cont_full_size));
+//     }
+//   }
+
+//   if(len > 0)
+//   {
+//     /* Notify that board has new data */
+//     egl_pio_set(int1(), true);  
+//   }
+
+//   // egl_pio_set(int2(), false);
+
+//   return len;
+// }
 
 static size_t read(void* data, size_t len)
 {
@@ -300,31 +335,56 @@ static egl_result_t close(void)
   return EGL_SUCCESS;
 }
 
+// void spi_dma_tx_irq(void)
+// {
+//   size_t cont_full_size = egl_ringbuf_get_cont_full_size(&tx_rbuff);
+//   //size_t full_len = egl_ringbuf_get_full_size(&tx_rbuff);
+
+//   //EGL_TRACE_DEBUG("Write len: %d, full size: %d\r\n", write_len, full_len);
+//   /* If we have something more to transmit,
+//      Thent setup new DMA transfer to write */
+//   if(cont_full_size > 0)
+//   {
+//     egl_pio_set(int2(), true);
+//     if(EGL_SUCCESS == setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), cont_full_size))
+//     {
+//       assert(cont_full_size == egl_ringbuf_reserve_for_read(&tx_rbuff, cont_full_size));
+//     }
+//     egl_pio_set(int2(), false);
+//     //EGL_TRACE_DEBUG("Reserved: %d, Left: %d\r\n", write_len, egl_ringbuf_get_cont_full_size(&tx_rbuff));
+//   }
+//   /* Else notify that transmission has been finished */
+//   else
+//   {
+//     egl_ringbuf_reset(&tx_rbuff);
+//     egl_pio_set(int1(), false);
+//     DMA_Cmd(DMA_TX, DISABLE);
+//   }
+// }
+
 void spi_dma_tx_irq(void)
 {
-  size_t cont_full_size = egl_ringbuf_get_cont_full_size(&tx_rbuff);
-  //size_t full_len = egl_ringbuf_get_full_size(&tx_rbuff);
+  /* Clear current chunk */
+  egl_chunk_t *chunk = egl_chunk_out_current_get(&tx_chunks);
+  chunk->size = 0;
 
-  //EGL_TRACE_DEBUG("Write len: %d, full size: %d\r\n", write_len, full_len);
-  /* If we have something more to transmit,
-     Thent setup new DMA transfer to write */
-  if(cont_full_size > 0)
+  /* Check next chunk */
+  chunk = egl_chunk_out_next_get(&tx_chunks);
+
+  /*If it contains some data then set up new DMA transmission */
+  if(chunk->size != 0)
   {
-    egl_pio_set(int2(), true);
-    if(EGL_SUCCESS == setup_dma_write(egl_ringbuf_get_out_ptr(&tx_rbuff), cont_full_size))
-    {
-      assert(cont_full_size == egl_ringbuf_reserve_for_read(&tx_rbuff, cont_full_size));
-    }
-    egl_pio_set(int2(), false);
-    //EGL_TRACE_DEBUG("Reserved: %d, Left: %d\r\n", write_len, egl_ringbuf_get_cont_full_size(&tx_rbuff));
+    setup_dma_write(chunk->buf, chunk->size);
   }
   /* Else notify that transmission has been finished */
   else
   {
-    egl_ringbuf_reset(&tx_rbuff);
     egl_pio_set(int1(), false);
     DMA_Cmd(DMA_TX, DISABLE);
   }
+
+  /* Increment chunk number */
+  egl_chunk_out_index_inc(&tx_chunks);
 }
 
 void spi_dma_rx_irq(void)

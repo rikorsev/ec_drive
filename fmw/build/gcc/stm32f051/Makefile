@@ -28,6 +28,7 @@ INCLUDE+=-I$(BSP_DIR)
 INCLUDE+=-I$(LIB_DIR)
 INCLUDE+=-I$(LIB_DIR)/abst/ringbuffer
 INCLUDE+=-I$(LIB_DIR)/abst/result
+INCLUDE+=-I$(LIB_DIR)/abst/chunk
 INCLUDE+=-I$(LIB_DIR)/func/count
 INCLUDE+=-I$(LIB_DIR)/func/led
 INCLUDE+=-I$(LIB_DIR)/func/interface
@@ -94,6 +95,7 @@ SRC_PERIPH+=$(PERIPH_SRC_DIR)/stm32f0xx_tim.c
 # Embedded General Libary source
 SRC_LIB+=$(LIB_DIR)/abst/ringbuffer/egl_ringbuf.c
 SRC_LIB+=$(LIB_DIR)/abst/result/egl_result.c
+SRC_LIB+=$(LIB_DIR)/abst/chunk/egl_chunk.c
 SRC_LIB+=$(LIB_DIR)/func/led/egl_led.c
 SRC_LIB+=$(LIB_DIR)/func/count/egl_counter.c
 SRC_LIB+=$(LIB_DIR)/func/interface/egl_interface.c

@@ -3,6 +3,7 @@
 
 #include "abst/ringbuffer/egl_ringbuf.h"
 #include "abst/result/egl_result.h"
+#include "abst/chunk/egl_chunk.h"
 #include "func/trace/egl_trace.h"
 #include "func/count/egl_counter.h"
 #include "func/led/egl_led.h"
