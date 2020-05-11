@@ -248,10 +248,13 @@ void __assert_func(const char * file, int line , const char * func, const char *
   /* Swich to polling mode */
   egl_itf_ioctl(dbg(), DBG_WRITE_POLLING_IOCTL, NULL, 0);
 
-  /* Trace fail message */
-  EGL_TRACE_FAIL("Critical fail! file: %s, line: %d, func: %s, expr: %s\r\n",
-                                                     file, line, func, expr);
-  
+  /* Trace fail message */  
+  EGL_TRACE_FAIL("FILE: %s\r\n", file);
+  EGL_TRACE_FAIL("LINE: %d\r\n", line);
+  EGL_TRACE_FAIL("FUNC: %s\r\n", func);
+  EGL_TRACE_FAIL("EXPR: %s\r\n", expr);
+
+
   while (1)
   {
     /* Do nothing */
