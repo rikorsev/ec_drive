@@ -42,7 +42,7 @@ void egl_chunk_out_index_inc(egl_chunks_t *chunks)
 void egl_chunk_in_index_inc(egl_chunks_t *chunks)
 {
     assert(chunks  != NULL);
-    chunks->out = (chunks->in + 1) % chunks->number;
+    chunks->in = (chunks->in + 1) % chunks->number;
 }
 
 egl_result_t egl_chunk_write_with_offset_and_index(egl_chunks_t *chunks, unsigned int index, void *data, size_t offset, size_t size)
@@ -166,20 +166,14 @@ egl_chunk_t *egl_chunk_out_current_get(egl_chunks_t *chunks)
 {
     assert(chunks  != NULL);
 
-    egl_chunk_t *chunk = egl_chunk_by_index_get(chunks, chunks->out++);
-    chunks->out %= chunks->number;
-
-    return chunk;
+    return egl_chunk_by_index_get(chunks, chunks->out);
 }
 
 egl_chunk_t *egl_chunk_in_current_get(egl_chunks_t *chunks)
 {
     assert(chunks  != NULL);
 
-    egl_chunk_t *chunk = egl_chunk_by_index_get(chunks, chunks->in++);
-    chunks->in %= chunks->number;
-
-    return chunk;
+    return egl_chunk_by_index_get(chunks, chunks->in);
 }
 
 egl_chunk_t *egl_chunk_in_previous_get(egl_chunks_t *chunks)
