@@ -191,13 +191,19 @@ static egl_result_t setup_dma_write(void *data, size_t len)
 
   assert(data);
 
+  EGL_TRACE_INFO("DMA TX. Lenght %d\r\n", len);
+
   if( len < SPI_FIFO_SIZE )
   {
+    EGL_TRACE_INFO("DMA TX. Invalid lenght. Less then %d\r\n", SPI_FIFO_SIZE);
+
     return EGL_INVALID_PARAM;
   }
 
   /* check if dma in error state */
   assert(DMA_GetFlagStatus(DMA1_FLAG_TE3) == RESET);
+
+
 
   /* Set up dma transmission */
   config.DMA_MemoryBaseAddr = (uint32_t)data;
@@ -220,10 +226,12 @@ static egl_result_t setup_dma_write(void *data, size_t len)
 
 static size_t write(void *data, size_t len)
 {
+  EGL_TRACE_INFO("Write: Len: %d\r\n", len);
+
   egl_result_t result = egl_chunk_write(&tx_chunks, data, len);
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Fail to write to chunk. Result %s", EGL_RESULT());
+    EGL_TRACE_ERROR("Fail to write to chunk. Result %s\r\n", EGL_RESULT());
     return 0;
   }
 
@@ -231,7 +239,10 @@ static size_t write(void *data, size_t len)
   if(DMA_GetCurrDataCounter(DMA_TX) == 0)
   {
     egl_chunk_t *chunk = egl_chunk_in_previous_get(&tx_chunks);
-    setup_dma_write(chunk->buf, chunk->size);
+
+    assert(chunk != NULL);
+
+    assert(EGL_SUCCESS == setup_dma_write(chunk->buf, chunk->size));
   }
 
   /* Notify that board has new data */
@@ -364,21 +375,30 @@ static egl_result_t close(void)
 
 void spi_dma_tx_irq(void)
 {
+  egl_chunk_t *chunk = NULL; 
+  
+  chunk = egl_chunk_out_current_get(&tx_chunks);
+
+  assert(chunk != NULL);
+
   /* Clear current chunk */
-  egl_chunk_t *chunk = egl_chunk_out_current_get(&tx_chunks);
   chunk->size = 0;
 
   /* Check next chunk */
   chunk = egl_chunk_out_next_get(&tx_chunks);
 
+  assert(chunk != NULL);
+
   /*If it contains some data then set up new DMA transmission */
   if(chunk->size != 0)
   {
+    EGL_TRACE_INFO("Continue transmission. Next chunk size %d\r\n", chunk->size);
     setup_dma_write(chunk->buf, chunk->size);
   }
   /* Else notify that transmission has been finished */
   else
   {
+    EGL_TRACE_INFO("Transmission finished\r\n");
     egl_pio_set(int1(), false);
     DMA_Cmd(DMA_TX, DISABLE);
   }
