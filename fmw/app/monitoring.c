@@ -38,7 +38,7 @@ static egl_result_t encode(monitor_entry_t *data, uint8_t *out)
     result = egl_ptc_setup(spi_llp(), CMD_MODITORING_DATA_ID, sizeof(CMD_MODITORING_DATA_ID));
     if(result != EGL_SUCCESS)
     {
-        EGL_TRACE_ERROR("Protocol setup - fail. Result %s\r\n", EGL_RESULT());
+        EGL_TRACE_ERROR("Protocol setup - fail. Result %s", EGL_RESULT());
         return result;
     }
 
@@ -46,13 +46,13 @@ static egl_result_t encode(monitor_entry_t *data, uint8_t *out)
     result = egl_ptc_encode(spi_llp(), data, sizeof(monitor_entry_t), out, &out_len);
     if(result != EGL_SUCCESS)
     {
-        EGL_TRACE_ERROR("Protocol encode - fail. Result %s\r\n", EGL_RESULT());
+        EGL_TRACE_ERROR("Protocol encode - fail. Result %s", EGL_RESULT());
         return result;
     }
 
     if(out_len != OUT_LEN)
     {
-        EGL_TRACE_ERROR("Out length %d, expected %d\r\n", out_len, OUT_LEN);
+        EGL_TRACE_ERROR("Out length %d, expected %d", out_len, OUT_LEN);
         return EGL_FAIL;
     }
 
@@ -68,13 +68,13 @@ static egl_result_t send(uint8_t *out)
     result = egl_itf_write(spi(), out, &write_len);
     if(result != EGL_SUCCESS)
     {
-        EGL_TRACE_ERROR("Data send - fail. Result %s\r\n", EGL_RESULT());
+        EGL_TRACE_ERROR("Data send - fail. Result %s", EGL_RESULT());
         return result;
     }
 
     if(write_len != OUT_LEN)
     {
-        EGL_TRACE_ERROR("Write len %d, expected %d\r\n", write_len, OUT_LEN);
+        EGL_TRACE_ERROR("Write len %d, expected %d", write_len, OUT_LEN);
         return EGL_FAIL;
     }
 
@@ -97,7 +97,7 @@ egl_result_t monitoring_update(void)
             .speed     = egl_bldc_get_speed(motor())
         };
 
-        EGL_TRACE_INFO("Monitoring\r\n");
+        EGL_TRACE_INFO("Monitoring");
 
         /* update target timestamp */
         target_timestamp = current_timestamp + PERIOD;

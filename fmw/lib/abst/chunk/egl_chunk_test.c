@@ -285,10 +285,73 @@ TEST(read_write, normal2)
 
 }
 
+TEST(read_write, write_serial)
+{   
+    EGL_DECLARE_CHUNKS(chunks, 4);
+    char buffer[32]        = {0};
+    char data_out[8]       = {0};
+    egl_result_t result    = EGL_FAIL;
+    size_t size_out        = sizeof(data_out);
+
+    char data_in1[] = {1};
+    char data_in2[] = {1, 2};
+    char data_in3[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+
+    egl_chunk_init(&chunks, buffer, sizeof(buffer));
+
+    /* Let's perform regular read write first */
+    
+    /* Write data */
+    result = egl_chunk_write(&chunks, data_in1, sizeof(data_in1));
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "WRITE: Wrong status");
+    
+    /* Read data */
+    size_out = sizeof(data_out);
+    result = egl_chunk_read(&chunks, data_out, &size_out);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "READ: Wrong out index");
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(data_in1, data_out, size_out, "RW1: Input and output DATA missmatch");
+
+    /* Write data */
+    result = egl_chunk_write(&chunks, data_in2, sizeof(data_in1));
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "WRITE: Wrong status");
+
+    /* Read data */
+    size_out = sizeof(data_out);
+    result = egl_chunk_read(&chunks, data_out, &size_out);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "READ: Wrong out index");
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(data_in2, data_out, size_out, "RW1: Input and output DATA missmatch");
+
+    /* Now lets perfom serial write */
+    /* Write several chunks with one call data */
+    result = egl_chunk_serial_write(&chunks, data_in3, sizeof(data_in3));
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "WRITE: Wrong status");
+
+    /* Check result. It should be written 3 chunks (2 full chunks and one non full)*/
+
+    /* Read data 1*/
+    size_out = sizeof(data_out);
+    result = egl_chunk_read(&chunks, data_out, &size_out);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "READ: Wrong out index");
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(data_in3, data_out, size_out, "RW1: Input and output DATA missmatch");
+    
+    /* Read data 2*/
+    size_out = sizeof(data_out);
+    result = egl_chunk_read(&chunks, data_out, &size_out);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "READ: Wrong out index");
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(data_in3 + 8, data_out, size_out, "RW1: Input and output DATA missmatch");
+
+    /* Read data 3*/
+    size_out = sizeof(data_out);
+    result = egl_chunk_read(&chunks, data_out, &size_out);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(EGL_SUCCESS, result, "READ: Wrong out index");
+    TEST_ASSERT_EQUAL_INT8_ARRAY_MESSAGE(data_in3 + 16, data_out, size_out, "RW1: Input and output DATA missmatch");
+}
+
 TEST_GROUP_RUNNER(read_write)
 {
     RUN_TEST_CASE(read_write, normal1);
     RUN_TEST_CASE(read_write, normal2);
+    RUN_TEST_CASE(read_write, write_serial);
 }
 
 TEST_GROUP(get);
@@ -311,10 +374,10 @@ TEST(get, last_written_read_with_zero_in_out_indexes)
 
     TEST_ASSERT(egl_chunk_init(&chunks, buffer, sizeof(buffer)) == EGL_SUCCESS);
 
-    chunk = egl_chunk_last_written_get(&chunks);
+    chunk = egl_chunk_in_previous_get(&chunks);
     TEST_ASSERT_EQUAL_PTR_MESSAGE(&chunks.chunk[3], chunk, "Wring pointer");
 
-    chunk = egl_chunk_last_read_get(&chunks);
+    chunk = egl_chunk_out_previous_get(&chunks);
     TEST_ASSERT_EQUAL_PTR_MESSAGE(&chunks.chunk[3], chunk, "Wring pointer");
 
 }

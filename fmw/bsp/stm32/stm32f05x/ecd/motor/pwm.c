@@ -456,13 +456,13 @@ static egl_result_t switch_wind(egl_bldc_hall_state_t hall, egl_bldc_dir_t dir)
 {
   if(hall > EGL_BLDC_HALL_STATE_6)
   {
-    EGL_TRACE_ERROR("Unknow hall state 0x%x\r\n", hall);
+    EGL_TRACE_ERROR("Unknow hall state 0x%x", hall);
     return EGL_INVALID_PARAM;
   }
 
   if(dir > EGL_BLDC_MOTOR_DIR_CCW)
   {
-    EGL_TRACE_ERROR("Unknow direction 0x%x\r\n", dir);
+    EGL_TRACE_ERROR("Unknow direction 0x%x", dir);
     return EGL_INVALID_PARAM;
   }
 

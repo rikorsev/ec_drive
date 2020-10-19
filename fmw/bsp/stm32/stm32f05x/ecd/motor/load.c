@@ -116,7 +116,7 @@ static void init(void)
   ref_load = get_averege();
   stop();
 
-  EGL_TRACE_INFO("Reference: %d\r\n", ref_load);
+  EGL_TRACE_INFO("Reference: %d", ref_load);
 }
 
 static void deinit(void)

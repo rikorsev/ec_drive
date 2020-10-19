@@ -27,12 +27,12 @@ static egl_result_t cmd_motor_start(const void *in, size_t len_in, void *out, si
 {
   egl_result_t result = EGL_FAIL;
   
-  EGL_TRACE_INFO("Motor start\r\n");
+  EGL_TRACE_INFO("Motor start");
   
   result = egl_bldc_start(motor());
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Motor start - fail. Result: %s\r\n", EGL_RESULT());
+    EGL_TRACE_ERROR("Motor start - fail. Result: %s", EGL_RESULT());
   }
   
   return result;
@@ -42,12 +42,12 @@ static egl_result_t cmd_motor_stop(const void *in, size_t len_in, void *out, siz
 {
   egl_result_t result = EGL_FAIL;
   
-  EGL_TRACE_INFO("Motor stop\r\n");
+  EGL_TRACE_INFO("Motor stop");
   
   result = egl_bldc_stop(motor());  
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Motor stop - fail. Result: %s\r\n", EGL_RESULT());
+    EGL_TRACE_ERROR("Motor stop - fail. Result: %s", EGL_RESULT());
   }
   
   return result;
@@ -63,7 +63,7 @@ static egl_result_t cmd_motor_power_set(const void *in, size_t len_in, void *out
   uint32_t speed = *(uint32_t *)in;
   egl_result_t result = EGL_SUCCESS;
   
-  EGL_TRACE_INFO("Motor set speed %d\r\n", speed);
+  EGL_TRACE_INFO("Motor set speed %d", speed);
 
   result = egl_bldc_set_power(motor(), motor_power_convert(speed));
 
@@ -72,7 +72,7 @@ static egl_result_t cmd_motor_power_set(const void *in, size_t len_in, void *out
 
 static egl_result_t cmd_monitoring_start(const void *in, size_t len_in, void *out, size_t *len_out)
 {
-  EGL_TRACE_INFO("Monitoring start\r\n");
+  EGL_TRACE_INFO("Monitoring start");
 
   monitoring_start();
 
@@ -81,7 +81,7 @@ static egl_result_t cmd_monitoring_start(const void *in, size_t len_in, void *ou
 
 static egl_result_t cmd_monitoring_stop(const void *in, size_t len_in, void *out, size_t *len_out)
 {
-  EGL_TRACE_INFO("Monitoring stop\r\n");
+  EGL_TRACE_INFO("Monitoring stop");
 
   monitoring_stop();
 
@@ -90,11 +90,11 @@ static egl_result_t cmd_monitoring_stop(const void *in, size_t len_in, void *out
 
 static egl_result_t cmd_test(const void *in, size_t len_in, void *out, size_t *len_out)
 {
-  EGL_TRACE_INFO("Test command\r\n");
+  EGL_TRACE_INFO("Test command");
 
   for(int i = 0; i < len_in; i++)
   {
-    EGL_TRACE_INFO("In: 0x%02x\r\n", ((uint8_t*)in)[i]);
+    EGL_TRACE_INFO("In: 0x%02x", ((uint8_t*)in)[i]);
   }
 
   memcpy(out, in, len_in);
@@ -124,13 +124,13 @@ static egl_result_t cmd_reset(const void *in, size_t len_in, void *out, size_t *
   /* Swich to polling mode */
   egl_itf_ioctl(dbg(), DBG_WRITE_POLLING_IOCTL, NULL, 0);
 
-  EGL_TRACE_INFO("Reset\r\n");
+  EGL_TRACE_INFO("Reset");
 
   /* Stop motor */
   result = egl_bldc_stop(motor());  
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Motor stop - fail. Result: %s\r\n", EGL_RESULT());
+    EGL_TRACE_ERROR("Motor stop - fail. Result: %s", EGL_RESULT());
     return result;
   }
 
@@ -138,7 +138,7 @@ static egl_result_t cmd_reset(const void *in, size_t len_in, void *out, size_t *
   result = egl_board_reset(board());
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Reset - fail. Result: %s\r\n", EGL_RESULT());
+    EGL_TRACE_ERROR("Reset - fail. Result: %s", EGL_RESULT());
   }
 
   return result;

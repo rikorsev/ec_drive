@@ -35,7 +35,7 @@ size_t egl_ringbuf_write(egl_ringbuf_t *ring, void *src, size_t sz);
 /* Usuall API */
 size_t egl_ringbuf_get_size(egl_ringbuf_t *ring);
 size_t egl_ringbuf_get_free_size(egl_ringbuf_t *ring);
-size_t egl_ringbuf_get_full_size(egl_ringbuf_t *ring);
+size_t egl_ringbuf_get_fill_size(egl_ringbuf_t *ring);
 void egl_ringbuf_reset(egl_ringbuf_t *ring);
 bool egl_ringbuf_is_empty(egl_ringbuf_t *ring);
 bool egl_ringbuf_is_full(egl_ringbuf_t *ring);
@@ -45,7 +45,7 @@ uint8_t *egl_ringbuf_get_in_ptr(egl_ringbuf_t *ring);
 uint8_t *egl_ringbuf_get_out_ptr(egl_ringbuf_t *ring);
 size_t egl_ringbuf_reserve_for_write(egl_ringbuf_t *ring, size_t size);
 size_t egl_ringbuf_reserve_for_read(egl_ringbuf_t *ring, size_t size);
-size_t egl_ringbuf_get_cont_full_size(egl_ringbuf_t *ring);
+size_t egl_ringbuf_get_cont_fill_size(egl_ringbuf_t *ring);
 size_t egl_ringbuf_get_cont_free_size(egl_ringbuf_t *ring);
 
 #endif

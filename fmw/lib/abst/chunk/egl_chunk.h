@@ -29,6 +29,7 @@ static egl_chunks_t NAME =                                                \
 egl_result_t egl_chunk_init(egl_chunks_t *chunks, char *buffer, size_t size);
 void         egl_chunk_reset(egl_chunks_t *chunks);
 egl_result_t egl_chunk_write(egl_chunks_t *chunks, void *data, size_t size);
+egl_result_t egl_chunk_serial_write(egl_chunks_t *chunks, void *data, size_t size);
 egl_result_t egl_chunk_read(egl_chunks_t *chunks, void *data, size_t *size);
 egl_result_t egl_chunk_write_with_offset_and_index(egl_chunks_t *chunks, unsigned int index, void *data, size_t offset, size_t size);
 egl_result_t egl_chunk_read_with_offset_and_index(egl_chunks_t *chunks, unsigned int index, void *data, size_t offset, size_t *size);

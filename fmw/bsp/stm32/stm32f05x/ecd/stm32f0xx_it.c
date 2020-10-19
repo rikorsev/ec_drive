@@ -128,7 +128,7 @@ void EXTI0_1_IRQHandler(void)
     result = egl_bldc_hall_handler(motor());
     if(result != EGL_SUCCESS)
     {
-      EGL_TRACE_ERROR("Hall 1 handler fail. Result: %s\r\n", EGL_RESULT());
+      EGL_TRACE_ERROR("Hall 1 handler fail. Result: %s", EGL_RESULT());
     }
 
     EXTI_ClearITPendingBit(HALL_1_EXTI);
@@ -141,7 +141,7 @@ void EXTI0_1_IRQHandler(void)
     result = egl_bldc_hall_handler(motor());
     if(result != EGL_SUCCESS)
     {
-      EGL_TRACE_ERROR("Hall 2 handler fail. Result: %s\r\n", EGL_RESULT());
+      EGL_TRACE_ERROR("Hall 2 handler fail. Result: %s", EGL_RESULT());
     }
       
     EXTI_ClearITPendingBit(HALL_2_EXTI);
@@ -159,7 +159,7 @@ void EXTI4_15_IRQHandler(void)
     result = egl_bldc_hall_handler(motor());
     if(result != EGL_SUCCESS)
     {
-      EGL_TRACE_ERROR("Hall 3 handler fail. Result: %s\r\n", EGL_RESULT());
+      EGL_TRACE_ERROR("Hall 3 handler fail. Result: %s", EGL_RESULT());
     }
     
     EXTI_ClearITPendingBit(HALL_3_EXTI);
@@ -184,6 +184,16 @@ void DMA1_Channel2_3_IRQHandler(void)
   //   DMA_ClearITPendingBit(DMA1_IT_TC2);
   //   DMA_Cmd(DMA1_Channel2, DISABLE);
   // }
+}
+
+void DMA1_Channel4_5_IRQHandler(void)
+{
+  if(DMA_GetITStatus(DMA1_IT_TC4) == SET)
+  {
+    dbg_dma_irq();
+   
+    DMA_ClearITPendingBit(DMA1_IT_TC4);
+  }
 }
 
 void TIM3_IRQHandler(void)

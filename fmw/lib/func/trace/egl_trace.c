@@ -92,5 +92,7 @@ void egl_trace(egl_trace_level_t lvl, char* module, char* format, ...)
     va_start(arg, format);
     vprintf(format, arg);
     va_end(arg);
+
+    printf("\r\n");
   }
 }

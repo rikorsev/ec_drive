@@ -56,7 +56,7 @@ uint8_t *egl_ringbuf_get_out_ptr(egl_ringbuf_t *ring)
   return &ring->buff[ring->ri];
 }
 
-size_t egl_ringbuf_get_cont_full_size(egl_ringbuf_t *ring)
+size_t egl_ringbuf_get_cont_fill_size(egl_ringbuf_t *ring)
 {
   assert(ring != NULL);
 
@@ -78,7 +78,7 @@ size_t egl_ringbuf_get_cont_free_size(egl_ringbuf_t *ring)
 {
   assert(ring != NULL);
 
-  return ring->size - egl_ringbuf_get_cont_full_size(ring) - ring->wi;
+  return ring->size - egl_ringbuf_get_cont_fill_size(ring) - ring->wi;
 }
 
 static inline size_t inc_idx(size_t idx, size_t size, size_t limit)
@@ -129,7 +129,7 @@ size_t egl_ringbuf_reserve_for_read(egl_ringbuf_t *ring, size_t size)
 {
   assert(ring != NULL);
   
-  size = truncate(ring, size, egl_ringbuf_get_full_size(ring));
+  size = truncate(ring, size, egl_ringbuf_get_fill_size(ring));
   
   if(size > 0)
   {
@@ -156,7 +156,7 @@ size_t egl_ringbuf_reserve_for_write(egl_ringbuf_t *ring, size_t size)
 size_t egl_ringbuf_read(egl_ringbuf_t *ring, void *dis, size_t size)
 {
   /* Truncete size of first chunk to size to read */
-  size_t chunk_one_size = truncate(ring, size, egl_ringbuf_get_cont_full_size(ring));
+  size_t chunk_one_size = truncate(ring, size, egl_ringbuf_get_cont_fill_size(ring));
   size_t chunk_two_size = 0;
   uint8_t *out = egl_ringbuf_get_out_ptr(ring);
 
@@ -171,7 +171,7 @@ size_t egl_ringbuf_read(egl_ringbuf_t *ring, void *dis, size_t size)
   if(size > chunk_one_size)
   {
     /* Truncate chunk two in case if free size less then data to read */
-    chunk_two_size = truncate(ring, size - chunk_one_size, egl_ringbuf_get_cont_full_size(ring));
+    chunk_two_size = truncate(ring, size - chunk_one_size, egl_ringbuf_get_cont_fill_size(ring));
 
     /* Read second chunk of data */
     out = egl_ringbuf_get_out_ptr(ring);
@@ -217,7 +217,7 @@ size_t egl_ringbuf_get_size(egl_ringbuf_t *ring)
   return ring->size;
 }
 
-size_t egl_ringbuf_get_full_size(egl_ringbuf_t *ring)
+size_t egl_ringbuf_get_fill_size(egl_ringbuf_t *ring)
 {
   assert(ring != NULL);
 
@@ -238,7 +238,7 @@ size_t egl_ringbuf_get_full_size(egl_ringbuf_t *ring)
 size_t egl_ringbuf_get_free_size(egl_ringbuf_t *ring)
 {
   assert(ring != NULL);
-  return ring->size - egl_ringbuf_get_full_size(ring);
+  return ring->size - egl_ringbuf_get_fill_size(ring);
 }
 
 void egl_ringbuf_reset(egl_ringbuf_t *ring)
@@ -249,7 +249,7 @@ void egl_ringbuf_reset(egl_ringbuf_t *ring)
 
 bool egl_ringbuf_is_empty(egl_ringbuf_t *ring)
 {
-  return egl_ringbuf_get_full_size(ring) == 0 ? true : false;
+  return egl_ringbuf_get_fill_size(ring) == 0 ? true : false;
 }
 
 bool egl_ringbuf_is_full(egl_ringbuf_t *ring)

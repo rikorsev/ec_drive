@@ -72,10 +72,31 @@ egl_result_t egl_chunk_write_with_offset_and_index(egl_chunks_t *chunks, unsigne
 
 egl_result_t egl_chunk_write(egl_chunks_t *chunks, void *data, size_t size)
 {
-    egl_result_t result = egl_chunk_write_with_offset_and_index(chunks, chunks->in, data, 0, size);
-    
+    unsigned int index = chunks->in;
+
     egl_chunk_in_index_inc(chunks);
-    
+
+    egl_result_t result = egl_chunk_write_with_offset_and_index(chunks, index, data, 0, size);
+       
+    return result;
+}
+
+egl_result_t egl_chunk_serial_write(egl_chunks_t *chunks, void *data, size_t size)
+{
+    egl_result_t result = EGL_FAIL;
+    unsigned int num_of_chunks = size / chunks->size + 1;
+    size_t write_len = 0;
+
+    for(int i = 0; i < num_of_chunks; i++)
+    {
+        write_len = size - chunks->size * i > chunks->size ? chunks->size : size - chunks->size * i;
+        result = egl_chunk_write(chunks, data + i * chunks->size, write_len);
+        if(result != EGL_SUCCESS)
+        {
+            break;
+        }
+    }
+
     return result;
 }
 
@@ -112,9 +133,11 @@ egl_result_t egl_chunk_read_with_offset_and_index(egl_chunks_t *chunks, unsigned
 
 egl_result_t egl_chunk_read(egl_chunks_t *chunks, void *data, size_t *size)
 {
-    egl_result_t result = egl_chunk_read_with_offset_and_index(chunks, chunks->out, data, 0, size);
-
+    unsigned int index = chunks->out;
+    
     egl_chunk_out_index_inc(chunks);
+
+    egl_result_t result = egl_chunk_read_with_offset_and_index(chunks, index, data, 0, size);
 
     return result;
 }

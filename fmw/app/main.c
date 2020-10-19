@@ -51,7 +51,7 @@ static void calc_aprox_motor_params(uint16_t pwm)
   load /= NUM_OF_APROXIMATIONS;
   speed /= NUM_OF_APROXIMATIONS;
   
-  EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
+  EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm", pwm, convert_to_mamps(load), speed);
 }
 
 static void motor_params_print(uint16_t pwm, uint32_t num_of_measures, uint32_t pause)
@@ -67,7 +67,7 @@ static void motor_params_print(uint16_t pwm, uint32_t num_of_measures, uint32_t 
     load  = egl_bldc_get_load(motor());
     speed = egl_bldc_get_speed(motor());
 
-    EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm\r\n", pwm, convert_to_mamps(load), speed);
+    EGL_TRACE_INFO("PWM: %d, Load: %d mA, Speed: %d rpm", pwm, convert_to_mamps(load), speed);
   }
 }
 
@@ -77,7 +77,7 @@ static void motor_load_print(uint32_t num_of_measures, uint32_t pause)
   {
     egl_delay(ms, pause);
     int16_t load = egl_bldc_get_load(motor());
-    EGL_TRACE_INFO("%d: %d (%d mA)\r\n", i, load, convert_to_mamps(load));
+    EGL_TRACE_INFO("%d: %d (%d mA)", i, load, convert_to_mamps(load));
   }
 }
 
@@ -92,35 +92,35 @@ static void spi_handler(void)
   result = egl_itf_read(spi(), buff_in, &read_len);
   if(result != EGL_SUCCESS)
   {
-    // EGL_TRACE_ERROR("SPI: read fail. Result: %s\r\n", EGL_RESULT());
+    // EGL_TRACE_ERROR("SPI: read fail. Result: %s", EGL_RESULT());
     return;
   }
   
   if(read_len > 0)
   {
-    EGL_TRACE_INFO("SPI: got %d\r\n", read_len);
+    EGL_TRACE_INFO("SPI: got %d", read_len);
     // for(int i = 0; i < read_len; i++)
     // {
-    //   EGL_TRACE_INFO("0x%02x\r\n", buff_in[i]);
+    //   EGL_TRACE_INFO("0x%02x", buff_in[i]);
     // }
 
     result = egl_ptc_decode(spi_llp(), buff_in, &read_len, buff_out, &write_len);
     if(result != EGL_SUCCESS && result != EGL_PROCESS)
     {
-      // EGL_TRACE_INFO("SPI: decode fail. Result: %s\r\n", EGL_RESULT());
+      // EGL_TRACE_INFO("SPI: decode fail. Result: %s", EGL_RESULT());
       return;
     }
   
-    // EGL_TRACE_INFO("SPI: send %d\r\n", write_len);
+    // EGL_TRACE_INFO("SPI: send %d", write_len);
       
     result = egl_itf_write(spi(), buff_out, &write_len);
     if(result != EGL_SUCCESS)
     {
-      // EGL_TRACE_ERROR("SPI: write fail. Result %s\r\n", EGL_RESULT());
+      // EGL_TRACE_ERROR("SPI: write fail. Result %s", EGL_RESULT());
       return;
     }
 
-    // EGL_TRACE_INFO("SPI: sent %d\r\n", write_len);
+    // EGL_TRACE_INFO("SPI: sent %d", write_len);
   }
 }  
 
@@ -131,20 +131,20 @@ void motor_test(uint16_t pwm, uint32_t num_of_measures, uint32_t pause)
   result = egl_bldc_set_power(motor(), pwm);
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Set motor power - fail. Result: %s\r\n", EGL_RESULT());
+    EGL_TRACE_ERROR("Set motor power - fail. Result: %s", EGL_RESULT());
     return;
   }
 
-  EGL_TRACE_INFO("Motor power set as %d\r\n", pwm);
+  EGL_TRACE_INFO("Motor power set as %d", pwm);
 
   result = egl_bldc_start(motor());
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Start motor - fail. Result: %s\r\n", EGL_RESULT());
+    EGL_TRACE_ERROR("Start motor - fail. Result: %s", EGL_RESULT());
     return;
   }
 
-  EGL_TRACE_INFO("Motor started\r\n");
+  EGL_TRACE_INFO("Motor started");
 
   //calc_aprox_motor_params(pwm);
   //motor_params_print(pwm, num_of_measures, pause);  
@@ -153,11 +153,11 @@ void motor_test(uint16_t pwm, uint32_t num_of_measures, uint32_t pause)
   result = egl_bldc_stop(motor());
   if(result != EGL_SUCCESS)
   {
-    EGL_TRACE_ERROR("Stop motor - fail. Result: %s\r\n", EGL_RESULT());
+    EGL_TRACE_ERROR("Stop motor - fail. Result: %s", EGL_RESULT());
     return;
   }
 
-  EGL_TRACE_INFO("Motor stoped\r\n");
+  EGL_TRACE_INFO("Motor stoped");
 }
 
 void motor_measure_params(egl_bldc_dir_t dir, uint16_t start_pwm, uint16_t stop_pwm, uint16_t pwm_step)
@@ -195,7 +195,7 @@ int main(void)
   egl_itf_open(dbg());
   egl_trace_init(EGL_TRACE_LEVEL_DEBUG, ms, NULL, 0);
   
-  EGL_TRACE_INFO("EC Drive v0.1\r\n");
+  EGL_TRACE_INFO("----------------- EC Drive v0.1 -------------------");
 
   egl_itf_open(spi());
   egl_led_on(led());
@@ -205,10 +205,10 @@ int main(void)
   
   //motor_test(32, 100, 10);  
   
-  //EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise\r\n");
+  //EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise");
   //motor_measure_params(EGL_BLDC_MOTOR_DIR_CW,  16, 320, 16);
   // egl_delay(ms, 5000);
-  // EGL_TRACE_INFO(" Measure motor params. Direction: Contrclockwise\r\n");
+  // EGL_TRACE_INFO(" Measure motor params. Direction: Contrclockwise");
   // motor_measure_params(EGL_BLDC_MOTOR_DIR_CCW, 16, 320, 16);
 
   //motor_speed_change_test();
@@ -245,15 +245,18 @@ void __assert_func(const char * file, int line , const char * func, const char *
   /* Stop motor if running */
   egl_bldc_stop(motor());
   
+  /* Switch on trace to let last taces */
+  egl_trace_enable();
+
   /* Swich to polling mode */
   egl_itf_ioctl(dbg(), DBG_WRITE_POLLING_IOCTL, NULL, 0);
 
   /* Trace fail message */
-  EGL_TRACE_FAIL("CRITICAL FAIL!\r\n");  
-  EGL_TRACE_FAIL("FILE: %s\r\n", file);
-  EGL_TRACE_FAIL("LINE: %d\r\n", line);
-  EGL_TRACE_FAIL("FUNC: %s\r\n", func);
-  EGL_TRACE_FAIL("EXPR: %s\r\n", expr);
+  EGL_TRACE_FAIL("CRITICAL!");  
+  EGL_TRACE_FAIL("FILE: %s", file);
+  EGL_TRACE_FAIL("LINE: %d", line);
+  EGL_TRACE_FAIL("FUNC: %s", func);
+  EGL_TRACE_FAIL("EXPR: %s", expr);
 
 
   while (1)
