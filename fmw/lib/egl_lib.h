@@ -1,6 +1,7 @@
 #ifndef EGL_LIB_H
 #define EGL_LIB_H
 
+#include "aux/other/egl_min_max.h"
 #include "abst/ringbuffer/egl_ringbuf.h"
 #include "abst/result/egl_result.h"
 #include "abst/chunk/egl_chunk.h"

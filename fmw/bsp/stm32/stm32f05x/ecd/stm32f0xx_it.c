@@ -166,6 +166,13 @@ void EXTI4_15_IRQHandler(void)
 
     egl_led_toggle(led());
   }
+  
+  if(EXTI_GetITStatus(EXTI_Line15) == SET)
+  {
+    spi_exti_irq();
+
+    EXTI_ClearITPendingBit(EXTI_Line15);
+  }
 }
 
 void DMA1_Channel2_3_IRQHandler(void)
@@ -176,14 +183,6 @@ void DMA1_Channel2_3_IRQHandler(void)
    
     DMA_ClearITPendingBit(DMA1_IT_TC3);
   }
-
-  // if(DMA_GetITStatus(DMA1_IT_TC2) == SET)
-  // {
-  //   spi_dma_rx_irq();
-
-  //   DMA_ClearITPendingBit(DMA1_IT_TC2);
-  //   DMA_Cmd(DMA1_Channel2, DISABLE);
-  // }
 }
 
 void DMA1_Channel4_5_IRQHandler(void)

@@ -266,6 +266,26 @@ void test_write_read_two_chuncks_id008(void)
     }
 }
 
+void test_write_read_boundary_id021(void)
+{   
+    const uint32_t data_in[] = { 0x12345678, 0x90ABCDEF, 0xFFFFFFFF };
+    uint32_t data_out        = 0;
+    size_t writen            = 0;
+    size_t read              = 0;
+ 
+    EGL_DECLARE_RINGBUF(ringbuf, 8);
+
+    for(int i = 0; i < 3; i++)
+    {
+        writen = egl_ringbuf_write(&ringbuf, &data_in[i], sizeof(data_in[i]));
+        TEST_ASSERT_EQUAL_INT_MESSAGE(4, writen,                              "WRITE: Wrong length");
+        read = egl_ringbuf_read(&ringbuf, &data_out, sizeof(data_out));
+        TEST_ASSERT_EQUAL_INT_MESSAGE(4, read,                                "READ: Wrong length");
+
+        TEST_ASSERT_EQUAL_HEX32_MESSAGE(data_in[i], data_out, "Input/Output data missmatch");
+    }
+}
+
 void test_write_read_loop_id009(void)
 {
     uint8_t data_in[]   = {0, 1, 2};
@@ -295,6 +315,45 @@ void test_write_read_loop_id009(void)
     }
 }
 
+void test_write_read_loop14_id020(void)
+{
+    #define DATA_IN_LEN 14
+    
+    uint8_t data_in[DATA_IN_LEN]  = {0};
+    uint8_t data_out[DATA_IN_LEN] = {0};
+    size_t writen                 = 0;
+    size_t read                   = 0;
+
+    EGL_DECLARE_RINGBUF(ringbuf, 128);
+
+    for(int i = 0; i < 10; i++)
+    {
+        /* init input data */
+        for(int j = 0; j < DATA_IN_LEN; j++)
+        {
+            data_in[j] = i * DATA_IN_LEN + j;
+        }
+
+        memset(data_out, 0, sizeof(data_out));
+
+        writen = egl_ringbuf_write(&ringbuf, data_in, sizeof(data_in));
+        
+        TEST_ASSERT_EQUAL_INT_MESSAGE(DATA_IN_LEN, writen, "WRITE: Wrong length");
+
+        read = egl_ringbuf_read(&ringbuf, data_out, sizeof(data_out));
+
+        TEST_ASSERT_EQUAL_INT_MESSAGE(DATA_IN_LEN, read, "READ: Wrong length");
+
+        /* Check output */
+        for(int i = 0; i < DATA_IN_LEN; i++)
+        {   
+            TEST_ASSERT_EQUAL_INT_MESSAGE(data_in[i], data_out[i], "READ: Wrong data out");
+            printf("IN[%d]: %d, OUT[%d]: %d\r\n", i, data_in[i], i, data_out[i]);
+            printf("RI: %d, WI: %d\r\n", ringbuf.ri, ringbuf.wi);
+        }
+    }
+}
+
 void test_write_read_loop_alligned_id018(void)
 {
     uint8_t data_in[]   = {0, 1, 2, 3};
@@ -310,13 +369,9 @@ void test_write_read_loop_alligned_id018(void)
 
         writen = egl_ringbuf_write(&ringbuf, data_in, sizeof(data_in));
         
-        printf("Writen: %d, ri: %d, wi: %d, overrun: %d\r\n", writen, ringbuf.ri, ringbuf.wi, ringbuf.overrun);
-
         TEST_ASSERT_EQUAL_INT_MESSAGE(sizeof(data_in), writen, "WRITE: Wrong length");
 
         read = egl_ringbuf_read(&ringbuf, data_out, sizeof(data_out));
-
-        printf("Read: %d, ri: %d, wi: %d, overrun: %d\r\n", read, ringbuf.ri, ringbuf.wi, ringbuf.overrun);
 
         TEST_ASSERT_EQUAL_INT_MESSAGE(sizeof(data_in), read, "READ: Wrong length");
 
@@ -340,19 +395,15 @@ void test_write_read_loop_6_14_id019(void)
 
     for(int i = 0; i < 100; i++)
     {
-        if(i == 50)
+        if(i == 10)
         {
             memset(data_out, 0, sizeof(data_out));
 
             writen = egl_ringbuf_write(&ringbuf, data_in6, sizeof(data_in6));
             
-            printf("Writen: %d, ri: %d, wi: %d, overrun: %d\r\n", writen, ringbuf.ri, ringbuf.wi, ringbuf.overrun);
-
             TEST_ASSERT_EQUAL_INT_MESSAGE(sizeof(data_in6), writen, "WRITE: Wrong length");
 
             read = egl_ringbuf_read(&ringbuf, data_out, sizeof(data_out));
-
-            printf("Read: %d, ri: %d, wi: %d, overrun: %d\r\n", read, ringbuf.ri, ringbuf.wi, ringbuf.overrun);
 
             TEST_ASSERT_EQUAL_INT_MESSAGE(sizeof(data_in6), read, "READ: Wrong length");
 
@@ -601,6 +652,7 @@ int main(void)
     RUN_TEST(test_write_one_messages_read_two_id007);
     RUN_TEST(test_write_read_two_chuncks_id008);
     RUN_TEST(test_write_read_loop_id009);
+    RUN_TEST(test_write_read_loop14_id020);
     RUN_TEST(test_write_read_loop_alligned_id018);
     RUN_TEST(test_write_read_loop_6_14_id019);
     RUN_TEST(test_reserve_for_write_read_byte_id010);
@@ -611,6 +663,7 @@ int main(void)
     RUN_TEST(test_reserve_for_write_once_for_read_twice_id015);
     RUN_TEST(test_reserve_for_write_read_with_buffer_rotation_id016);
     RUN_TEST(test_reserve_for_write_read_loop_id017);
+    RUN_TEST(test_write_read_boundary_id021);
 
     return UnityEnd();
 }

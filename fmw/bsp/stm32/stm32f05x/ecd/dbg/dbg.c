@@ -9,7 +9,7 @@
 #define TX               (GPIO_Pin_2)
 #define TX_AF            (GPIO_PinSource2)
 #define DEFAULT_SPEED    (115200)
-#define BUFF_SIZE        (1024)
+#define BUFF_SIZE        (2048)
 #define CLOCK_GPIO       (RCC_AHBPeriph_GPIOA)
 #define CLOCK_UART       (RCC_APB1Periph_USART2)
 #define IRQ_PRIORITY     (2)
@@ -331,7 +331,7 @@ static egl_interface_t dbg_impl =
 {
   .init   = init,
   .open   = open,
-  .write  = write_interrupt,
+  .write  = write_dma,
   .ioctl  = ioctl,
   .read   = NULL,
   .close  = close,

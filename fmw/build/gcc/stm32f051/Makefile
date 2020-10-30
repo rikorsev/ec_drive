@@ -7,7 +7,7 @@ STFLASH=st-flash
 OPENOCD=openocd
 GDB=gdb-multiarch
 REMOTE=pi
-IP=192.168.0.110
+IP=192.168.0.101
 
 # Pathes
 OBJ_DIR=./obj
@@ -40,6 +40,7 @@ INCLUDE+=-I$(LIB_DIR)/func/pio
 INCLUDE+=-I$(LIB_DIR)/func/board
 INCLUDE+=-I$(LIB_DIR)/protocol
 INCLUDE+=-I$(LIB_DIR)/protocol/llp
+INCLUDE+=-I$(LIB_DIR)/aux/other
 
 # Source files
 # Application source files

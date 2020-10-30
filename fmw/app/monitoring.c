@@ -97,7 +97,7 @@ egl_result_t monitoring_update(void)
             .speed     = egl_bldc_get_speed(motor())
         };
 
-        EGL_TRACE_INFO("Monitoring");
+        EGL_TRACE_INFO("M");
 
         /* update target timestamp */
         target_timestamp = current_timestamp + PERIOD;

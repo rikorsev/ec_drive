@@ -13,20 +13,9 @@
 #define MISO             (GPIO_Pin_4)
 #define MOSI             (GPIO_Pin_5)
 #define CS               (GPIO_Pin_15)
-#define CLOCK_A          (RCC_AHBPeriph_GPIOA)
-#define CLOCK_B          (RCC_AHBPeriph_GPIOB)
-#define CLOCK_SPI        (RCC_APB2Periph_SPI1)
-#define SCK_AF           (GPIO_PinSource3)
-#define MISO_AF          (GPIO_PinSource4)
-#define MOSI_AF          (GPIO_PinSource5)
-#define CS_AF            (GPIO_PinSource15)
 #define BUFF_SIZE        (128)
-#define IRQ_PRIORITY     (1)
 #define DMA_RX           (DMA1_Channel2)
 #define DMA_TX           (DMA1_Channel3)
-#define CLOCK_DMA        (RCC_AHBPeriph_DMA1)
-#define IRQ              (DMA1_Channel2_3_IRQn)
-#define SPI_FIFO_SIZE    (4)
 
 /* declare ring buffers */
 EGL_DECLARE_RINGBUF(tx_rbuff, BUFF_SIZE);
@@ -46,14 +35,14 @@ static void gpio_init(void)
   };  
 
   /* Enable GPIO clock */
-  RCC_AHBPeriphClockCmd(CLOCK_A, ENABLE);
-  RCC_AHBPeriphClockCmd(CLOCK_B, ENABLE);
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
 
   /* SPI pin mappings */
-  GPIO_PinAFConfig(PORT1, SCK_AF,  GPIO_AF_0);
-  GPIO_PinAFConfig(PORT1, MISO_AF, GPIO_AF_0);
-  GPIO_PinAFConfig(PORT1, MOSI_AF, GPIO_AF_0);
-  GPIO_PinAFConfig(PORT2, CS_AF,   GPIO_AF_0);
+  GPIO_PinAFConfig(PORT1, GPIO_PinSource3, GPIO_AF_0);
+  GPIO_PinAFConfig(PORT1, GPIO_PinSource4, GPIO_AF_0);
+  GPIO_PinAFConfig(PORT1, GPIO_PinSource5, GPIO_AF_0);
+  GPIO_PinAFConfig(PORT2, GPIO_PinSource15,   GPIO_AF_0);
 
   /* SPI SCK, MOSI, MISO pins configuration */
   GPIO_Init(PORT1, &config);
@@ -78,7 +67,7 @@ static void spi_init(void)
     .SPI_Mode              = SPI_Mode_Slave
   };
 
-  RCC_APB2PeriphClockCmd(CLOCK_SPI, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
     
   /* Initializes the SPI communication */
   SPI_Init(SPI, (SPI_InitTypeDef *) &config);
@@ -88,15 +77,34 @@ static void spi_init(void)
 
 static void nvic_init(void)
 {
-  static const NVIC_InitTypeDef config = 
+  /* Configure DMA interrupt */
+  NVIC_InitTypeDef config = 
   {
-    .NVIC_IRQChannel         = IRQ,
-    .NVIC_IRQChannelPriority = IRQ_PRIORITY,
+    .NVIC_IRQChannel         = DMA1_Channel2_3_IRQn,
+    .NVIC_IRQChannelPriority = 1,
     .NVIC_IRQChannelCmd      = ENABLE
   };
 
-  /* Configure DMA interrupt */
-  NVIC_Init( (NVIC_InitTypeDef *) &config);
+  NVIC_Init(&config);
+
+  /* Config EXTI interrupt */
+  config.NVIC_IRQChannel         = EXTI4_15_IRQn;
+  config.NVIC_IRQChannelPriority = 2;
+
+  NVIC_Init(&config);
+}
+
+static void exti_init(void)
+{
+  static const EXTI_InitTypeDef config = 
+  {
+    .EXTI_Line    = CS,
+    .EXTI_Mode    = EXTI_Mode_Interrupt,
+    .EXTI_Trigger = EXTI_Trigger_Rising,
+    .EXTI_LineCmd = ENABLE
+  };
+
+  EXTI_Init(&config);
 }
 
 static void setup_dma_read(void *data, size_t len)
@@ -115,8 +123,6 @@ static void setup_dma_read(void *data, size_t len)
     .DMA_M2M                = DMA_M2M_Disable,
   };  
  
-  //EGL_TRACE_INFO("DMA: RX Len: %d", len);
-
   if (len > 0)
   {
     /* check if dma is not in error state */
@@ -134,13 +140,10 @@ static void setup_dma_read(void *data, size_t len)
 
 void dma_init(void)
 {
-  RCC_AHBPeriphClockCmd(CLOCK_DMA, ENABLE);
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
   /* Enable DMA SPI TX Transfer complete interrupt */
   DMA_ITConfig(DMA_TX, DMA_IT_TC, ENABLE);
-
-  /* TBD: currently commented, let's see if I need it, if not then I will remove it*/
-  //DMA_ITConfig(DMA_RX, DMA_IT_TC, ENABLE);
 }
 
 static void init(void)
@@ -149,6 +152,7 @@ static void init(void)
   spi_init();
   dma_init();
   nvic_init();
+  exti_init();
 }
 
 static egl_result_t open(void)
@@ -180,15 +184,6 @@ static egl_result_t setup_dma_write(void *data, size_t len)
 
   assert(data);
 
-  EGL_TRACE_INFO("DMA TX. Lenght %d", len);
-
-  if( len < SPI_FIFO_SIZE )
-  {
-    EGL_TRACE_INFO("DMA TX. Invalid lenght. Less then %d", SPI_FIFO_SIZE);
-
-    return EGL_INVALID_PARAM;
-  }
-
   /* check if dma in error state */
   assert(DMA_GetFlagStatus(DMA1_FLAG_TE3) == RESET);
 
@@ -200,58 +195,42 @@ static egl_result_t setup_dma_write(void *data, size_t len)
   DMA_Cmd(DMA_TX, DISABLE);
   DMA_Init(DMA_TX, &config);
 
-  // while((SPI->SR & SPI_I2S_FLAG_BSY) == SET)
-  // {
-  //   /* Do nothing */
-  // }
+  /* Wait till the end of current transmisstion */ 
+  while(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_15) == 0)
+  {
+    /* Do nothing */
+  }
 
   /* Start DMA */
-  DMA_TX->CCR |= DMA_CCR_EN;
+  DMA_Cmd(DMA_TX, ENABLE);
 
   return EGL_SUCCESS;
 }
 
 static size_t write(void *data, size_t data_len)
 {
-  EGL_TRACE_INFO("Write: %d", data_len);
-
   /* If DMA transmission not started, then srart it */
   if(DMA_GetCurrDataCounter(DMA_TX) == 0)
   {
-    /* check if something we have in ringbuffer */
-    size_t ring_len = egl_ringbuf_get_fill_size(&tx_rbuff);
-
-    if(ring_len > 0)
-    {
-      ring_len = egl_ringbuf_read(&tx_rbuff, dma_tx_buffer, ring_len);
-    }
-
-    /* Truncate data if necessary */
-    data_len = (BUFF_SIZE - ring_len) < data_len ? (BUFF_SIZE - ring_len) : data_len;
-
-    memcpy(dma_tx_buffer + ring_len, data, data_len);
-
-    assert(EGL_SUCCESS == setup_dma_write(dma_tx_buffer, ring_len + data_len));
+    data_len = MIN(BUFF_SIZE, data_len);
+    memcpy(dma_tx_buffer, data, data_len);
+    assert(EGL_SUCCESS == setup_dma_write(dma_tx_buffer, data_len));
   }
   else
-  {    
-    EGL_TRACE_INFO("BWrite: %d, ri: %d, wi: %d", data_len, tx_rbuff.ri, tx_rbuff.wi);
-    __disable_irq();
+  { 
     data_len = egl_ringbuf_write(&tx_rbuff, data, data_len);
-    __enable_irq();
-    EGL_TRACE_INFO("AWrite: %d, ri: %d, wi: %d", data_len, tx_rbuff.ri, tx_rbuff.wi);
   }
-
+    
   if(data_len > 0)
   {
-    /* Notify that board has new data */
+    /* Notify that controller has new data */
     egl_pio_set(int1(), true);
   }
 
   return data_len;
 }
 
-static size_t read(void* data, size_t len)
+static size_t read(void *data, size_t len)
 {
   /* Get amount of bytes that came to buffer */ 
   uint16_t counter = DMA_GetCurrDataCounter(DMA_RX);
@@ -315,18 +294,18 @@ static egl_result_t close(void)
 
   return EGL_SUCCESS;
 }
+
 void spi_dma_tx_irq(void)
 {
   size_t fill = egl_ringbuf_get_fill_size(&tx_rbuff);
+  
+  assert(DMA_GetCurrDataCounter(DMA_TX) == 0);
 
   if(fill > 0)
   {
-    egl_pio_set(int2(), true);
-    EGL_TRACE_INFO("Fill: %d, ri: %d, wi: %d", fill, tx_rbuff.ri, tx_rbuff.wi);
     size_t write_len = egl_ringbuf_read(&tx_rbuff, dma_tx_buffer, fill);
 
     assert(EGL_SUCCESS == setup_dma_write(dma_tx_buffer, write_len));
-    egl_pio_set(int2(), false);
   }
   else
   {
@@ -335,10 +314,10 @@ void spi_dma_tx_irq(void)
   }
 }
 
-void spi_dma_rx_irq(void)
+void spi_exti_irq(void)
 {
-  setup_dma_read(egl_ringbuf_get_in_ptr(&rx_rbuff),
-                 egl_ringbuf_get_cont_free_size(&rx_rbuff));
+  /* Start DMA */
+  DMA_Cmd(DMA_TX, ENABLE);
 }
 
 static egl_interface_t spi_impl = 

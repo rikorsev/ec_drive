@@ -98,7 +98,7 @@ static void spi_handler(void)
   
   if(read_len > 0)
   {
-    EGL_TRACE_INFO("SPI: got %d", read_len);
+    // EGL_TRACE_INFO("SPI: got %d", read_len);
     // for(int i = 0; i < read_len; i++)
     // {
     //   EGL_TRACE_INFO("0x%02x", buff_in[i]);
@@ -203,6 +203,8 @@ int main(void)
   egl_pio_set(int1(), false);
   egl_pio_set(int2(), false);
   
+  EGL_TRACE_INFO("CONTROL: 0x%x", __get_CONTROL());
+
   //motor_test(32, 100, 10);  
   
   //EGL_TRACE_INFO(" Measure motor params. Direction: Clockwise");
