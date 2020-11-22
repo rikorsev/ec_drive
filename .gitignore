@@ -4,7 +4,9 @@ fmw/build/gcc/stm32f103/obj/*
 fmw/build/gcc/stm32f103/bin/*
 ord/*
 *~
-doc/*
+doc/datasheet/*
+doc/examination/*
+doc/order/*
 fmw/GPATH
 fmw/GRTAGS
 fmw/GSYMS
