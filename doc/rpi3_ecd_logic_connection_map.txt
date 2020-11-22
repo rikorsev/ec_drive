@@ -1,0 +1,9 @@
+Name   | RPI3 | ECD | Logic    | Colour
+========================================
+MOSI   | 19   | 10  | Channel2 | Yellow
+MISO   | 21   | 9   | Channel4 | Green
+SCLK   | 23   | 8   | Channel1 | Orange
+GND    | 25   | 4   | GND      | Black
+CS     | 24   | 7   | Channel3 | Blue
+INT1   | ?    | 2   | Channel5 | Red
+INT2   | N/C  | 14  | Channel6 | Orange
